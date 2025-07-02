@@ -70,3 +70,43 @@
 3. Generate professional Excel export
 
 ## 🏗️ File Structure
+
+## 🔧 Development
+
+This is a single-file application built with vanilla JavaScript. To contribute:
+
+1. Fork the repository
+2. Make your changes to `DOGG_v3.0.html`
+3. Test thoroughly in multiple browsers
+4. Submit a pull request
+
+## 📊 System Requirements
+
+- **Minimum:** Any modern web browser with JavaScript enabled
+- **Recommended:** Desktop/laptop for optimal experience
+- **Storage:** Uses browser LocalStorage (typically 5-10MB limit)
+
+## 🐕 About DOGG
+
+D.O.G.G. (Dashboard for ODL and General Governance) is your faithful companion for construction project management. Like a loyal dog, it watches over your costs, tracks your progress, and alerts you to potential issues.
+
+**Version 3.0** introduces advanced features like smart import, budget controls, and professional TICKET export system.
+
+## 📄 License
+
+MIT License - See LICENSE file for details
+
+## 🤝 Contributing
+
+Contributions are welcome! Please read the contributing guidelines and submit pull requests for any improvements.
+
+## 📞 Support
+
+For issues or questions, please open a GitHub issue with:
+- Browser version
+- Steps to reproduce
+- Screenshots if applicable
+
+---
+
+Made with ❤️ for construction professionals who need reliable project management tools.
