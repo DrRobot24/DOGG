@@ -71,6 +71,20 @@
 
 ## 🏗️ File Structure
 
+### 📄 **Core Files:**
+- **`DOGG_v 3.0 .html`** - Single-file application with complete functionality
+- **`README.md`** - Complete project documentation
+- **`LICENSE`** - MIT License for open source usage
+
+### 📚 **Documentation:**
+- **`docs/`** - Detailed guides and technical documentation
+- **`examples/`** - Sample Excel files for testing
+- **`screenshots/`** - Visual documentation of features
+
+### 🔮 **Future Structure (PWA):**
+- **`assets/`** - Resources for Progressive Web App implementation
+- **`icons/`** - App icons for mobile installation
+- **`manifest.json`** - PWA configuration file
 ## 🔧 Development
 
 This is a single-file application built with vanilla JavaScript. To contribute:
