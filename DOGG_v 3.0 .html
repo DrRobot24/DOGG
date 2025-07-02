@@ -656,6 +656,18 @@ const app = {
                 
                 console.log(`  🔍 Analisi valori numerici riga ${idx}:`, row.slice(codeIndex + 2));
                 
+                // 🔍 ANALISI DETTAGLIATA DI TUTTE LE COLONNE PER IDENTIFICARE LA STRUTTURA CORRETTA
+                console.log(`    🗂️ Tutte le colonne della riga ${idx}:`);
+                for (let colIdx = 0; colIdx < row.length; colIdx++) {
+                    const cell = row[colIdx];
+                    if (cell !== null && cell !== undefined && cell !== '') {
+                        const cellStr = cell.toString();
+                        const isNumber = !isNaN(parseFloat(cellStr.replace(',', '.')));
+                        const isUnit = /^[a-zA-Z]{1,10}\.?$/.test(cellStr.trim());
+                        console.log(`      Col[${colIdx}]: "${cellStr}" | Numero:${isNumber} | UnitàMisura:${isUnit}`);
+                    }
+                }
+                
                 // � LETTURA DIRETTA COLONNE PREVENTIVO STANDARD
                 // Colonna E (indice 4): Unità di Misura
                 if (row.length > 4 && row[4] !== null && row[4] !== undefined && row[4] !== '') {
@@ -667,13 +679,13 @@ const app = {
                     }
                 }
                 
-                // Colonna F (indice 5): Quantità
+                // Colonna F (indice 5): QUANTITÀ MASSIMA DISPONIBILE PER L'ITEM
                 if (row.length > 5 && row[5] !== null && row[5] !== undefined && row[5] !== '') {
                     const cellF = row[5];
                     const qtaNum = parseFloat(cellF.toString().replace(',', '.'));
                     if (!isNaN(qtaNum) && qtaNum > 0) {
                         quantita = qtaNum;
-                        console.log(`    📊 ✅ Quantità dalla colonna F: ${quantita}`);
+                        console.log(`    📊 ✅ QUANTITÀ MASSIMA DISPONIBILE dalla colonna F: ${quantita} (questo è il limite per le produzioni)`);
                     }
                 }
                 
@@ -687,19 +699,38 @@ const app = {
                     }
                 }
                 
-                // �💰 PRIORITÀ: Cerca prima l'IMPORTO TOTALE in colonna H (indice 7)
-                if (row.length > 7 && row[7] !== null && row[7] !== undefined && row[7] !== '') {
-                    const cellH = row[7];
-                    console.log(`    🔍 Colonna H (indice 7) valore grezzo: "${cellH}" (tipo: ${typeof cellH})`);
-                    const importoH = parseFloat(cellH.toString().replace(',', '.'));
-                    if (!isNaN(importoH) && importoH > 0) {
-                        importoTotale = importoH;
-                        console.log(`    💰 ✅ BUDGET estratto dalla colonna H: €${importoTotale.toFixed(2)}`);
+                // 💰 PRIORITÀ MASSIMA: IMPORTO TOTALE dalla colonna G (indice 6) - FORMATTAZIONE CONTABILITÀ
+                if (row.length > 6 && row[6] !== null && row[6] !== undefined && row[6] !== '') {
+                    const cellG = row[6];
+                    console.log(`    🔍 Colonna G (indice 6) IMPORTO TOTALE valore grezzo: "${cellG}" (tipo: ${typeof cellG})`);
+                    
+                    // 🔧 PARSING ROBUSTO PER VALORI CONTABILITÀ EXCEL
+                    let importoG = 0;
+                    if (typeof cellG === 'number') {
+                        // Se è già un numero, usalo direttamente
+                        importoG = cellG;
+                        console.log(`    💰 ✅ Numero diretto dalla colonna G (Importo Totale): €${importoG.toFixed(2)}`);
                     } else {
-                        console.log(`    ⚠️ Colonna H: valore non valido "${cellH}" -> ${importoH}`);
+                        // Se è una stringa, puliscila da formattazione contabilità
+                        const cellStr = cellG.toString()
+                            .replace(/[€$£¥₹]/g, '') // Rimuovi simboli valuta
+                            .replace(/\s+/g, '') // Rimuovi spazi
+                            .replace(/[()]/g, '') // Rimuovi parentesi (valori negativi)
+                            .replace(/,/g, '.') // Sostituisci virgole con punti
+                            .replace(/[^\d.-]/g, ''); // Rimuovi tutto tranne numeri, punti e trattini
+                        
+                        importoG = parseFloat(cellStr);
+                        console.log(`    💰 Parsing string G: "${cellG}" -> "${cellStr}" -> ${importoG}`);
+                    }
+                    
+                    if (!isNaN(importoG) && importoG > 0) {
+                        importoTotale = importoG;
+                        console.log(`    💰 ✅ IMPORTO TOTALE estratto dalla colonna G: €${importoTotale.toFixed(2)}`);
+                    } else {
+                        console.log(`    ⚠️ Colonna G: valore non valido "${cellG}" -> ${importoG}`);
                     }
                 } else {
-                    console.log(`    ❌ Colonna H: non disponibile o vuota (lunghezza row: ${row.length})`);
+                    console.log(`    ❌ Colonna G: non disponibile o vuota (lunghezza row: ${row.length})`);
                 }
                 
                 // 🔄 FALLBACK: Se colonne standard non hanno dati, analizza tutte le celle
@@ -737,20 +768,25 @@ const app = {
                     }
                 }
                 
-                // ✅ VALIDAZIONE E CALCOLI CON BUDGET
-                // Se abbiamo l'importo totale dalla colonna H, usalo come budget
-                let budgetItem = importoTotale;
+                // ✅ VALIDAZIONE E CALCOLI CON BUDGET - PRIORITÀ COLONNA G
+                // PRIORITÀ ASSOLUTA: Se abbiamo l'importo totale dalla colonna G, usalo come budget
+                let budgetItem = 0;
                 
-                // Se prezzoTotale è 0, prova a calcolarlo
-                if (prezzoTotale === 0 && quantita > 0 && prezzoUnitario > 0) {
-                    prezzoTotale = quantita * prezzoUnitario;
-                    console.log(`  🧮 Prezzo totale calcolato: ${prezzoTotale}`);
-                }
-                
-                // Se non abbiamo budget dalla colonna H, usa prezzoTotale
-                if (budgetItem === 0 && prezzoTotale > 0) {
-                    budgetItem = prezzoTotale;
-                    console.log(`  💰 Budget derivato da prezzo totale: ${budgetItem}`);
+                if (importoTotale > 0) {
+                    // 🎯 PRIORITÀ MASSIMA: Usa sempre il valore dalla colonna G (IMPORTO TOTALE) se disponibile
+                    budgetItem = importoTotale;
+                    console.log(`  💰 ✅ Budget principale dalla colonna G (IMPORTO TOTALE): €${budgetItem.toFixed(2)}`);
+                } else {
+                    // FALLBACK: Solo se colonna G non ha valore, calcola o usa prezzoTotale
+                    if (prezzoTotale === 0 && quantita > 0 && prezzoUnitario > 0) {
+                        prezzoTotale = quantita * prezzoUnitario;
+                        console.log(`  🧮 Prezzo totale calcolato (fallback): ${prezzoTotale}`);
+                    }
+                    
+                    if (prezzoTotale > 0) {
+                        budgetItem = prezzoTotale;
+                        console.log(`  💰 Budget derivato da calcolo (fallback): ${budgetItem}`);
+                    }
                 }
                 
                 // Se quantità è 0 ma abbiamo prezzi, imposta quantità a 1
@@ -766,7 +802,7 @@ const app = {
                     codiceMateriale: codice,
                     descrizione: descrizione,
                     unitaMisura: unitaMisura,
-                    quantita: quantita,
+                    quantita: quantita, // 🎯 QUANTITÀ MASSIMA DISPONIBILE (dalla colonna F)
                     prezzoUnitario: prezzoUnitario,
                     prezzoTotale: budgetItem, // BUDGET DELL'ITEM
                     budgetTotale: budgetItem, // Campo dedicato per il budget
@@ -778,7 +814,7 @@ const app = {
                 };
                 
                 items.push(item);
-                console.log(`✅ ITEM CREATO: ${codice} | ${categoria} | "${descrizione.substring(0, 30)}..." | UM:${unitaMisura} | Qty:${quantita} | PrezzoUnit:€${prezzoUnitario.toFixed(2)} | Budget:€${budgetItem.toFixed(2)} | ImportoTotColH:€${importoTotale.toFixed(2)}`);
+                console.log(`✅ ITEM CREATO: ${codice} | ${categoria} | "${descrizione.substring(0, 30)}..." | UM:${unitaMisura} | 🎯 QtyMAX:${quantita} | PrezzoUnit:€${prezzoUnitario.toFixed(2)} | BUDGET(ColG):€${budgetItem.toFixed(2)} | ImportoRaw:€${importoTotale.toFixed(2)}`);
             }
         }
         
@@ -2207,9 +2243,64 @@ const app = {
     
     updateTotals() {
         const items = this.state.itemsData;
-        const totalBudget = items.reduce((sum, i) => sum + i.prezzoTotale, 0);
+        
+        // 🐛 DEBUG: Controlla valori anomali nei prezzi totali
+        console.log('🔍 DEBUG TOTALI - Analisi prezzi per item:');
+        items.forEach((item, idx) => {
+            if (item.prezzoTotale > 100000) { // Soglia per identificare valori anomali
+                console.warn(`⚠️ VALORE ANOMALO - Item ${idx}:`, {
+                    codice: item.codiceMateriale,
+                    descrizione: item.descrizione?.substring(0, 50),
+                    prezzoTotale: item.prezzoTotale,
+                    quantita: item.quantita,
+                    prezzoUnitario: item.prezzoUnitario
+                });
+            }
+        });
+        
+        const totalBudget = items.reduce((sum, i) => {
+            const prezzo = parseFloat(i.prezzoTotale) || 0;
+            const calcolato = (i.quantita || 0) * (i.prezzoUnitario || 0);
+            
+            // 🔧 FILTRO TEMPORANEAMENTE RIDOTTO PER VERIFICARE PARSING COLONNA G
+            // Esclude solo valori chiaramente anomali o con errori di calcolo
+            if (prezzo > 100000) { // Soglia temporaneamente aumentata per vedere tutti i valori
+                console.error(`❌ VALORE FILTRATO - Troppo alto: ${prezzo}€ per ${i.codiceMateriale}`);
+                return sum;
+            }
+            
+            // Controllo specifico per errori di importazione (quantità = prezzo unitario)
+            // RIMOSSO: Con la lettura dalla colonna G questo controllo non è più necessario
+            /*
+            if (i.quantita === i.prezzoUnitario && i.quantita > 100) {
+                console.error(`❌ VALORE FILTRATO - Errore importazione Q.tà=P.Unit: ${prezzo}€ per ${i.codiceMateriale}`);
+                return sum;
+            }
+            */
+            
+            // Controllo per prezzi unitari irrealistici (>50k€/unità probabilmente è un errore)
+            if ((i.prezzoUnitario || 0) > 50000) {
+                console.error(`❌ VALORE FILTRATO - Prezzo unitario irrealistico: ${i.prezzoUnitario}€/unità per ${i.codiceMateriale}`);
+                return sum;
+            }
+            
+            // Log per tutti i valori per verificare la correttezza
+            if (prezzo > 1000) {
+                console.log(`✅ VALORE ACCETTATO dalla colonna G (IMPORTO TOTALE): ${prezzo}€ per ${i.codiceMateriale} (Q.tà=${i.quantita} × P.Unit=${i.prezzoUnitario})`);
+            }
+            
+            return sum + prezzo;
+        }, 0);
+        
         const totalConsumed = items.reduce((sum, i) => sum + ((i.consumato || 0) * (i.prezzoUnitario || 0)), 0);
         const completed = items.filter(i => i.completamento >= 99.9).length;
+        
+        console.log('📊 TOTALI CALCOLATI:', {
+            totalBudget: totalBudget,
+            totalConsumed: totalConsumed,
+            remaining: totalBudget - totalConsumed,
+            itemsCount: items.length
+        });
         
         const totalItems = document.getElementById('totalItems');
         const totalConsumedEl = document.getElementById('totalConsumed');
@@ -3160,30 +3251,30 @@ const app = {
                 item.produzione = [];
             }
             
-            // 🚨 CONTROLLO BUDGET ANCHE PER IMPORT AUTOMATICI
+            // 🚨 CONTROLLO QUANTITÀ MASSIMA DISPONIBILE (COLONNA F DEL PREVENTIVO)
             const nuovaQuantita = produzione.quantita || 0;
             const consumatoAttuale = item.consumato || 0;
-            const quantitaDisponibile = item.quantita || 0;
+            const quantitaMAXDisponibile = item.quantita || 0; // 🎯 Dalla colonna F: quantità massima dell'item
             const nuovoConsumato = consumatoAttuale + nuovaQuantita;
             
-            // ⚠️ Per import automatici, logga ma non blocca (evita interruzioni massive)
-            if (nuovoConsumato > quantitaDisponibile) {
-                console.warn(`⚠️ SUPERAMENTO BUDGET DURANTE IMPORT - ${item.codiceMateriale}:`, {
-                    quantitaDisponibile,
+            // ⚠️ Verifica se si supera la quantità massima disponibile per questo item
+            if (nuovoConsumato > quantitaMAXDisponibile) {
+                console.warn(`⚠️ SUPERAMENTO QUANTITÀ MASSIMA - ${item.codiceMateriale}:`, {
+                    quantitaMAXDisponibile,
                     consumatoAttuale,
                     nuovaQuantita,
                     nuovoConsumato,
                     operatore: produzione.operatore || produzione.risorsa || 'N/D'
                 });
                 
-                // 🔧 OPZIONE: Limita la quantità al massimo disponibile
-                const quantitaLimitata = Math.max(0, quantitaDisponibile - consumatoAttuale);
+                // 🔧 OPZIONE: Limita la quantità al massimo disponibile per l'item
+                const quantitaLimitata = Math.max(0, quantitaMAXDisponibile - consumatoAttuale);
                 if (quantitaLimitata > 0) {
                     produzione.quantita = quantitaLimitata;
-                    produzione.note = (produzione.note || '') + ` [LIMITATA DA ${nuovaQuantita} A ${quantitaLimitata}]`;
-                    console.log(`🔧 Quantità limitata automaticamente a ${quantitaLimitata} ${item.unitaMisura}`);
+                    produzione.note = (produzione.note || '') + ` [LIMITATA DA ${nuovaQuantita} A ${quantitaLimitata} - MAX ITEM: ${quantitaMAXDisponibile}]`;
+                    console.log(`🔧 Quantità limitata automaticamente a ${quantitaLimitata} ${item.unitaMisura} (max item: ${quantitaMAXDisponibile})`);
                 } else {
-                    console.warn(`❌ Produzione scartata - budget completamente esaurito per ${item.codiceMateriale}`);
+                    console.warn(`❌ Produzione scartata - quantità massima completamente utilizzata per ${item.codiceMateriale} (max: ${quantitaMAXDisponibile})`);
                     return false; // Non aggiungere se non c'è spazio
                 }
             }
@@ -3218,7 +3309,23 @@ const app = {
         }
     },
 
-    // 🇮🇹 FORMATTAZIONE NUMERI ITALIANA
+    // � HELPER: Verifica la disponibilità residua di un item
+    getItemAvailability(item) {
+        const quantitaMAXDisponibile = item.quantita || 0; // Dalla colonna F del preventivo
+        const consumatoAttuale = item.consumato || 0;
+        const disponibileResidue = Math.max(0, quantitaMAXDisponibile - consumatoAttuale);
+        
+        return {
+            quantitaMAXDisponibile,
+            consumatoAttuale,
+            disponibileResidue,
+            percentualeUtilizzo: quantitaMAXDisponibile > 0 ? Math.round((consumatoAttuale / quantitaMAXDisponibile) * 100) : 0,
+            isEsaurito: disponibileResidue <= 0,
+            isProssimAllEsaurimento: disponibileResidue > 0 && disponibileResidue <= (quantitaMAXDisponibile * 0.1) // Meno del 10%
+        };
+    },
+
+    // �🇮🇹 FORMATTAZIONE NUMERI ITALIANA
     formatCurrency(value, decimals = 2) {
         if (value === null || value === undefined || isNaN(value)) {
             return '€ 0,00';
