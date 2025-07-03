@@ -1,0 +1,3509 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D.O.G.G. v3.0 - Dashboard ODL Sistema TICKET POTENZIATO</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --info: #3498db;
+            --dark: #2c3e50;
+            --gold: #FFD700;
+        }
+        
+        * { box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            min-height: 100vh; color: #fff; margin: 0; padding: 0;
+        }
+        
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { font-size: 2.5rem; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        
+        /* Pannelli e card uniformi */
+        .panel {
+            background: rgba(255,255,255,0.1); border-radius: 15px; padding: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2); margin-bottom: 30px;
+        }
+        
+        .odl-manager { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
+        
+        /* Bottoni unificati */
+        .btn {
+            color: white; border: none; padding: 10px 20px; border-radius: 8px;
+            cursor: pointer; font-weight: bold; transition: all 0.3s ease;
+            margin-left: 10px; display: inline-block;
+        }
+        .btn:hover { transform: translateY(-2px); }
+        .btn-success { background: var(--success); }
+        .btn-info { background: var(--info); }
+        .btn-warning { background: var(--warning); }
+        .btn-danger { background: var(--danger); }
+        .btn-primary { background: #9b59b6; }
+        
+        /* Form elements */
+        .form-control {
+            width: 100%; padding: 10px; border: none; border-radius: 5px;
+            background: rgba(255,255,255,0.07); color: white; margin-bottom: 10px;
+        }
+        
+        select.form-control option { background: var(--dark); color: white; }
+        
+        /* Upload area */
+        .upload-area {
+            background: rgba(255,255,255,0.1); border: 2px dashed rgba(255,255,255,0.3);
+            border-radius: 15px; padding: 40px; text-align: center; cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .upload-area:hover { background: rgba(255,255,255,0.15); transform: translateY(-2px); }
+        
+        /* Grid layouts */
+        .grid { display: grid; gap: 20px; }
+        .grid-auto { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+        .grid-fill { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 25px; }
+        
+        /* Cards */
+        .card {
+            background: rgba(255,255,255,0.1); padding: 25px; border-radius: 15px;
+            text-align: center; transition: transform 0.3s ease;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+        .card:hover { transform: translateY(-5px); }
+        .card h3 { font-size: 0.9rem; opacity: 0.8; margin-bottom: 10px; }
+        .card-value { font-size: 2rem; font-weight: bold; color: var(--gold); text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        
+        /* Progress indicators (ex gauges) */
+        .progress-card {
+            background: linear-gradient(145deg, var(--dark), #34495e); border-radius: 20px;
+            padding: 20px; cursor: pointer; transition: all 0.3s ease; text-align: center;
+            position: relative; overflow: hidden;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.3), -5px -5px 15px rgba(255,255,255,0.1);
+        }
+        .progress-card:hover { transform: translateY(-8px); box-shadow: 0 12px 30px rgba(0,0,0,0.4); }
+        
+        /* Dog paw animation */
+        @keyframes pawPrint { 
+            0% { opacity: 0; transform: scale(0) rotate(-15deg); }
+            50% { opacity: 1; transform: scale(1.2) rotate(5deg); }
+            100% { opacity: 0; transform: scale(1) rotate(0deg); }
+        }
+        
+        /* Dog wag animation */
+        @keyframes dogWag {
+            0% { transform: rotate(-5deg); }
+            50% { transform: rotate(5deg); }
+            100% { transform: rotate(-5deg); }
+        }
+        
+        /* Badges */
+        .badge {
+            position: absolute; top: 10px; right: 10px; padding: 4px 8px;
+            border-radius: 12px; font-size: 10px; font-weight: bold;
+        }
+        .badge-manodopera { background: var(--info); }
+        .badge-materiali { background: var(--danger); }
+        .badge-noleggi { background: var(--warning); }
+        .badge-servizi { background: #9b59b6; }
+        
+        /* Modal system */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.88); z-index: 1000;
+        }
+        .modal-content {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: var(--dark); border-radius: 20px; padding: 30px; width: 95%;
+            max-width: 800px; max-height: 90vh; color: white; overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .close-btn { background: none; border: none; font-size: 24px; color: white; cursor: pointer; }
+        
+        /* Tables */
+        table { width: 100%; border-spacing: 0; margin-bottom: 12px; }
+        th, td { padding: 4px 6px; font-size: 13px; }
+        th { background: #263042; }
+        tr:nth-child(even) { background: rgba(255,255,255,0.03); }
+        
+        /* Alerts */
+        .alert {
+            padding: 12px; border-radius: 8px; margin: 10px 0; font-weight: bold;
+            border-left: 4px solid;
+        }
+        .alert-success { background: var(--success); border-left-color: #229954; }
+        .alert-danger { background: var(--danger); border-left-color: #c0392b; }
+        .alert-warning { background: var(--warning); border-left-color: #e67e22; }
+        .alert-info { background: var(--info); border-left-color: #2980b9; }
+        
+        /* Mapping items */
+        .mapping-item {
+            display: flex; align-items: center; justify-content: space-between;
+            margin: 8px 0; padding: 12px; background: rgba(255,255,255,0.03);
+            border-radius: 8px; border-left: 4px solid transparent; transition: all 0.3s ease;
+        }
+        .mapping-item.included { border-left-color: var(--success); background: rgba(39, 174, 96, 0.1); }
+        .mapping-item.excluded { border-left-color: var(--danger); background: rgba(231, 76, 60, 0.1); opacity: 0.7; }
+        .mapping-item.misura { border-left-color: var(--warning); background: rgba(243, 156, 18, 0.1); }
+        
+        /* Animations */
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        @keyframes slideOut { from { transform: translateX(0); } to { transform: translateX(100%); } }
+        
+        /* Utility classes */
+        .text-center { text-align: center; }
+        .mt-1 { margin-top: 10px; }
+        .mt-2 { margin-top: 20px; }
+        .mb-1 { margin-bottom: 10px; }
+        .mb-2 { margin-bottom: 20px; }
+        .hidden { display: none; }
+        
+        /* Modal system */
+        .modal {
+            display: none; position: fixed; z-index: 10000; left: 0; top: 0;
+            width: 100%; height: 100%; background: rgba(0,0,0,0.8);
+        }
+        .modal-content {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white; padding: 20px; border-radius: 15px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5); max-width: 700px;
+            max-height: 85vh; overflow-y: auto; width: 90%;
+            border: 2px solid rgba(255,255,255,0.1);
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .close { font-size: 28px; font-weight: bold; cursor: pointer; opacity: 0.8; }
+        .close:hover { opacity: 1; }
+        
+        /* Tables */
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.2); }
+        th { 
+            background: linear-gradient(135deg, var(--info), #2980b9) !important;
+            color: white !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.3) !important;
+        }
+        
+        /* Badges */
+        .badge {
+            display: inline-block; padding: 5px 10px; border-radius: 20px;
+            font-size: 0.8em; font-weight: bold; margin: 2px;
+        }
+        .badge-manodopera { background: #3498db; }
+        .badge-noleggi { background: #f39c12; }
+        .badge-materiali { background: #e74c3c; }
+        .badge-servizi { background: #9b59b6; }
+        
+        /* Progress cards */
+        .progress-info { position: relative; margin: 15px 0; }
+        .progress-text { 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 1.2em; font-weight: bold; z-index: 2;
+        }
+        .progress-bar {
+            width: 80px; height: 80px; border-radius: 50%; margin: 0 auto;
+            position: relative; background: rgba(255,255,255,0.1);
+        }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .card-footer { margin-top: 10px; opacity: 0.8; }
+        
+        /* Alerts */
+        .alert { 
+            padding: 15px; border-radius: 10px; margin: 15px 0; 
+            border: 1px solid transparent;
+        }
+        .alert-success { background: rgba(39, 174, 96, 0.2); border-color: #27ae60; }
+        .alert-info { background: rgba(52, 152, 219, 0.2); border-color: #3498db; }
+        .alert-warning { background: rgba(243, 156, 18, 0.2); border-color: #f39c12; }
+        .alert-danger { background: rgba(231, 76, 60, 0.2); border-color: #e74c3c; }
+        
+        /* Small buttons */
+        .btn-small { padding: 5px 10px; font-size: 0.8em; }
+        
+        /* Responsive */
+        @media (max-width: 600px) {
+            .modal-content { 
+                padding: 15px; margin: 5% auto; width: 95%; max-width: none;
+                max-height: 90vh; font-size: 0.9em;
+            }
+            .container { padding: 7px; }
+            .odl-manager { flex-direction: column; align-items: stretch; }
+            .grid-auto, .grid-fill { grid-template-columns: 1fr; }
+            
+            /* Modal compatto per mobile */
+            .modal-content h2 { font-size: 1.3em; margin-bottom: 10px; }
+            .modal-content .panel { padding: 10px; }
+            .modal-content .grid { gap: 8px; }
+            .modal-content .form-control { padding: 6px; font-size: 0.85em; }
+            .modal-content .btn { padding: 6px 10px; font-size: 0.85em; }
+        }
+        
+        @media (max-width: 400px) {
+            .modal-content {
+                width: 98%; padding: 10px; max-height: 95vh;
+            }
+            .modal-content .grid[style*="grid-template-columns: 1fr 1fr"] {
+                grid-template-columns: 1fr !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div style="width: 120px; height: 120px; margin: 0 auto 20px; background: linear-gradient(45deg, #FFD700, #FFA500); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 3rem; box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4); animation: dogWag 2s ease-in-out infinite alternate;">🐕</div>
+        <h1>🐕 D.O.G.G. v3.0</h1>
+        <p>Il tuo fedele assistente per la gestione ODL - Sistema TICKET per fatturazione</p>
+        <p style="font-size: 0.9rem; opacity: 0.8;">Dashboard Avanzata • Import Intelligente • Formato TICKET Excel</p>
+    </div>
+
+    <!-- ODL Management Panel -->
+    <div class="panel odl-manager">
+        <label style="font-weight: bold;">📋 Progetto ODL:</label>
+        <select class="form-control" id="odlSelector" style="min-width: 200px; margin: 0;">
+            <option value="">Seleziona un ODL esistente</option>
+        </select>
+        <button class="btn btn-success" onclick="app.createNewODL()">🆕 Nuovo ODL</button>
+        <button class="btn btn-info hidden" id="btnImportRapportino" onclick="app.openImportRapportino()">🧠 Import Intelligente v3.0</button>
+        <button class="btn btn-success hidden" id="btnSaveOdl" onclick="app.salvaODLManuale()">💾 Salva ODL</button>
+        <button class="btn btn-info hidden" id="btnBackup" onclick="app.openBackupModal()">📁 Backup</button>
+        <button class="btn btn-primary hidden" id="btnExportMensile" onclick="app.openExportMensileModal()">🎫 Export TICKET v3.0</button>
+        <button class="btn btn-warning hidden" id="btnLavoriMisura" onclick="app.openLavoriMisuraModal()">🟠 Lavori a Misura</button>
+        <button class="btn btn-danger hidden" id="btnResetData" onclick="app.resetCurrentODL()">🗑️ Reset Dati</button>
+        <button class="btn btn-secondary hidden" id="btnDebugTest" onclick="app.testImportFunction()" style="font-size: 0.8rem;">🧪 Test</button>
+        <div style="flex-grow: 1; text-align: right;" id="currentOdlInfo">Nessun ODL caricato</div>
+    </div>
+
+    <!-- Upload Area -->
+    <div class="upload-area" id="uploadArea">
+        <div style="font-size: 3rem; margin-bottom: 10px;">📁</div>
+        <div style="font-size: 1.2rem; font-weight: bold;">Trascina qui il file Excel ODL</div>
+        <div style="opacity: 0.8; margin: 10px 0;">Supporta file .xlsx del formato ODL con codici P120</div>
+        <div style="font-size: 0.9rem; color: #666; border-top: 1px solid #eee; padding-top: 10px; margin-top: 15px;">
+            <strong>Requisiti file Excel:</strong><br>
+            • Codici articolo che iniziano con "P120"<br>
+            • Colonne: Codice, Descrizione, Quantità, Prezzo<br>
+            • Formato: Excel (.xlsx) standard
+        </div>
+        <input type="file" id="fileInput" accept=".xlsx,.csv" style="display: none;">
+    </div>
+
+    <!-- Dashboard -->
+    <div class="grid grid-auto hidden" id="totalsPanel">
+        <div class="card"><h3>TOTALE ITEM</h3><div class="card-value" id="totalItems">0</div></div>
+        <div class="card"><h3>CONSUMATO</h3><div class="card-value" id="totalConsumed">€ 0</div></div>
+        <div class="card"><h3>RIMANENTE</h3><div class="card-value" id="totalRemaining">€ 0</div></div>
+        <div class="card"><h3>ITEM COMPLETI</h3><div class="card-value" id="completedItems">0</div></div>
+    </div>
+
+    <div class="hidden" id="filtersPanel" style="display: flex; gap: 15px; margin-bottom: 30px;">
+        <button class="btn btn-info active" data-filter="all">Tutti</button>
+        <button class="btn btn-info" data-filter="manodopera">Manodopera</button>
+        <button class="btn btn-info" data-filter="materiali">Materiali</button>
+        <button class="btn btn-info" data-filter="noleggi">Noleggi</button>
+        <button class="btn btn-info" data-filter="servizi">Servizi</button>
+    </div>
+    
+    <div class="grid grid-fill" id="gaugesContainer"></div>
+</div>
+
+<!-- Dog Footer -->
+<div style="text-align: center; margin-top: 40px; opacity: 0.6;">
+    <div style="font-size: 2rem;">🐾</div>
+    <p style="font-size: 0.8rem;">D.O.G.G. v3.0 - Il tuo fedele compagno di contabilità industriale</p>
+    <p style="font-size: 0.7rem; margin-top: 5px;">Estrazione automatica intelligente per TICKET perfetti!</p>
+    <p style="font-size: 0.7rem; margin-top: 5px;">Come il nostro amico nella foto, sempre vigile sui tuoi costi!</p>
+</div>
+
+<!-- Modals Container -->
+<div id="modalsContainer"></div>
+
+<script>
+// ===================================
+// 🐕 D.O.G.G. v3.0 - Your Faithful ODL Companion POTENZIATO
+// ===================================
+
+const app = {
+    // Stato globale
+    state: {
+        itemsData: [],
+        currentFilter: 'all',
+        currentOdlId: null,
+        currentImportMode: 'nico',
+        rapportinoData: null,
+        mappingRules: null,
+        exportMensileData: null
+    },
+    
+    // Configurazione potenziata v3.0
+    config: {
+        appName: 'D.O.G.G.',
+        version: '3.0',
+        appMotto: 'Il tuo fedele assistente per TICKET perfetti',
+        categories: {
+            manodopera: { patterns: [/P12002630[0-8]|P120026314/], color: '#3498db', emoji: '👨‍💼' },
+            noleggi: { patterns: [/P120028254|P120028686|P120028688|P120029262/], color: '#f39c12', emoji: '🚜' },
+            materiali: { patterns: [/P120027834|P120029110|P120029288|P120029293/], color: '#e74c3c', emoji: '🧱' },
+            servizi: { patterns: [], color: '#9b59b6', emoji: '🔧' }
+        },
+        // NUOVO v3.0: Parole chiave per riconoscimento automatico
+        parolachiaveAttivita: [
+            'apertura', 'chiusura', 'bonifica', 'saldatura', 'taglio', 'montaggio', 'smontaggio',
+            'rimozione', 'installazione', 'messa in sicurezza', 'pulizia', 'verniciatura',
+            'controllo', 'verifica', 'ispezione', 'manutenzione', 'riparazione', 'sostituzione'
+        ]
+    },
+    
+    // Inizializzazione
+    init() {
+        this.setupEventListeners();
+        this.loadODLsList();
+        this.loadFromStorage();
+        this.initModals();
+        console.log('🐕 D.O.G.G. v3.0 - TICKET POTENZIATO pronto!');
+        console.log('🧠 Nuove funzionalità: Estrazione automatica operatori e attività');
+        console.log('🎫 TICKET completo con tutte le colonne ODL');
+        console.log('🔧 Debug mode attivo - verifica console per dettagli');
+        
+        // Test iniziale
+        console.log('📊 Configurazione categorie:', this.config.categories);
+        console.log('🗄️ Stato iniziale:', this.state);
+    },
+    
+    // Event Listeners unificati
+    setupEventListeners() {
+        const $ = (id) => document.getElementById(id);
+        
+        // Upload area
+        const uploadArea = $('uploadArea');
+        const fileInput = $('fileInput');
+        const odlSelector = $('odlSelector');
+        
+        if (uploadArea && fileInput) {
+            this.setupDragDrop(uploadArea, (file) => this.processFile(file));
+            uploadArea.onclick = () => fileInput.click();
+            fileInput.onchange = (e) => e.target.files[0] && this.processFile(e.target.files[0]);
+        }
+        
+        // ODL selector
+        if (odlSelector) {
+            odlSelector.onchange = (e) => e.target.value ? this.loadODL(e.target.value) : this.resetView();
+        }
+        
+        // Filters
+        document.querySelectorAll('[data-filter]').forEach(btn => {
+            btn.onclick = () => this.setFilter(btn.dataset.filter);
+        });
+        
+        // Modal clicks
+        window.onclick = (e) => {
+            if (e.target.classList.contains('modal')) e.target.style.display = 'none';
+        };
+    },
+    
+    // Drag & Drop helper
+    setupDragDrop(element, callback) {
+        ['dragover', 'dragleave', 'drop'].forEach(event => {
+            element.addEventListener(event, (e) => {
+                e.preventDefault();
+                if (event === 'drop' && e.dataTransfer.files.length) {
+                    callback(e.dataTransfer.files[0]);
+                }
+            });
+        });
+    },
+    
+    // Gestione ODL
+    createNewODL() {
+        this.showModal('newOdl', `
+            <h2>🆕 Crea Nuovo ODL</h2>
+            <form onsubmit="app.saveNewODL(event)">
+                <input class="form-control" id="newOdlName" required placeholder="Nome Progetto ODL">
+                <input class="form-control" id="newOdlDesc" placeholder="Descrizione (opzionale)">
+                <button type="submit" class="btn btn-success" style="width: 100%;">✅ Crea ODL</button>
+            </form>
+        `);
+    },
+    
+    saveNewODL(e) {
+        e.preventDefault();
+        const name = document.getElementById('newOdlName').value;
+        const desc = document.getElementById('newOdlDesc').value;
+        const odlId = `ODL_${Date.now()}`;
+        
+        const odls = this.getStorageJson('odlsList');
+        odls[odlId] = { name, description: desc, date: new Date().toLocaleDateString('it-IT'), created: Date.now() };
+        localStorage.setItem('odlsList', JSON.stringify(odls));
+        
+        this.state.currentOdlId = odlId;
+        this.state.itemsData = [];
+        this.updateView();
+        this.loadODLsList();
+        document.getElementById('odlSelector').value = odlId;
+        this.hideModal();
+        this.toast(`✅ Nuovo ODL "${name}" creato!`);
+    },
+    
+    loadODL(odlId) {
+        const data = this.getStorageJson(`odlData_${odlId}`);
+        
+        // ✅ FIX: Gestisci correttamente i dati caricati
+        if (Array.isArray(data)) {
+            this.state.itemsData = data;
+        } else if (data && typeof data === 'object' && data.length !== undefined) {
+            // Potrebbe essere un oggetto array-like
+            this.state.itemsData = Object.values(data);
+        } else {
+            // Nessun dato trovato
+            this.state.itemsData = [];
+        }
+        
+        this.state.currentOdlId = odlId;
+        this.updateView();
+        
+        console.log(`📂 ODL ${odlId} caricato: ${this.state.itemsData.length} item`);
+    },
+    
+    loadODLsList() {
+        const odls = this.getStorageJson('odlsList');
+        const selector = document.getElementById('odlSelector');
+        if (!selector) return;
+        
+        selector.innerHTML = '<option value="">Seleziona un ODL esistente</option>';
+        
+        Object.entries(odls).forEach(([id, odl]) => {
+            selector.innerHTML += `<option value="${id}">${odl.name} (${odl.date})</option>`;
+        });
+    },
+
+    processFile(file) {
+        if (!this.state.currentOdlId) {
+            alert('⚠️ Prima crea un nuovo ODL o selezionane uno esistente!');
+            return;
+        }
+
+        if (!file.name.match(/\.(xlsx|csv)$/i)) {
+            alert('Seleziona un file Excel (.xlsx) o CSV');
+            return;
+        }
+
+        console.log('🔄 PROCESSAMENTO FILE INIZIATO:', file.name);
+        console.log('� Dimensione file:', (file.size / 1024).toFixed(2), 'KB');
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                console.log('📖 Lettura file completata, parsing Excel...');
+                const workbook = XLSX.read(new Uint8Array(e.target.result), {
+                    type: 'array',
+                    cellDates: true,
+                    cellNF: false,
+                    cellText: false
+                });
+                
+                console.log('📊 Workbook caricato con successo!');
+                console.log('📋 Fogli disponibili:', workbook.SheetNames);
+
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(sheet, {
+                    header: 1,
+                    defval: null,
+                    blankrows: true
+                });
+                
+                console.log('📋 Dati estratti dal foglio:', jsonData.length, 'righe');
+                console.log('📋 Range dati:', sheet['!ref']);
+
+                const oldItemsCount = this.state.itemsData.length;
+                const newItems = this.extractItemsFromODL(jsonData);
+                
+                if (newItems.length > 0) {
+                    this.state.itemsData = newItems;
+                    console.log('🔄 Items aggiornati - Prima:', oldItemsCount, 'Dopo:', this.state.itemsData.length);
+                    
+                    this.saveToStorage();
+                    this.updateView();
+                    this.toast(`✅ ODL caricato con successo!\n📊 ${this.state.itemsData.length} item importati\n💼 File: ${file.name}`);
+                } else {
+                    console.error('❌ Nessun item estratto dal file!');
+                    alert('❌ Errore: Nessun item trovato nel file.\n\n' +
+                          'Verifica che:\n' +
+                          '• Il file contenga codici che iniziano con "P120"\n' +
+                          '• Le colonne abbiano il formato corretto\n' +
+                          '• Il file non sia danneggiato\n\n' +
+                          'Controlla la console per dettagli tecnici.');
+                }
+            } catch (error) {
+                console.error('❌ ERRORE PROCESSAMENTO FILE:', error);
+                console.error('Stack trace:', error.stack);
+                alert('❌ Errore durante la lettura del file:\n\n' + error.message + 
+                      '\n\nVerifica che il file Excel non sia danneggiato e riprova.');
+            }
+        };
+        
+        reader.onerror = (error) => {
+            console.error('❌ Errore lettura file:', error);
+            alert('❌ Errore durante la lettura del file. Riprova.');
+        };
+        
+        reader.readAsArrayBuffer(file);
+    },
+    
+    extractItemsFromODL(rows) {
+        const items = [];
+        let headerRowIndex = -1;
+        
+        console.log('🔍 ANALISI PREVENTIVO ODL - Righe totali:', rows.length);
+        console.log('🔍 PRIMA ANALISI - Prime 25 righe per debug:');
+        
+        // ✅ ANALISI PRELIMINARE COMPLETA
+        for (let idx = 0; idx < Math.min(25, rows.length); idx++) {
+            const row = rows[idx];
+            console.log(`📋 Riga ${idx.toString().padStart(2, '0')}:`, 
+                row ? row.map(cell => {
+                    if (cell === null || cell === undefined) return 'NULL';
+                    if (typeof cell === 'string') return `"${cell}"`;
+                    if (typeof cell === 'number') return `NUM:${cell}`;
+                    return `${typeof cell}:${cell}`;
+                }).slice(0, 8) : 'RIGA VUOTA'
+            );
+            
+            // Cerca header
+            if (headerRowIndex === -1 && row && row.length > 2) {
+                const rowText = row.map(c => c ? c.toString().toLowerCase() : '').join('|');
+                if (rowText.includes('codice') || rowText.includes('descrizione') || 
+                    rowText.includes('capitolo') || rowText.includes('articolo') ||
+                    rowText.includes('prezzo') || rowText.includes('importo')) {
+                    headerRowIndex = idx;
+                    console.log('✅ HEADER IDENTIFICATO alla riga', idx, '- Testo:', rowText);
+                }
+            }
+        }
+        
+        const startRow = headerRowIndex > -1 ? headerRowIndex + 1 : 5;
+        console.log(`🎯 INIZIO ESTRAZIONE dalla riga ${startRow}`);
+        
+        // ✅ ESTRAZIONE ITEM MIGLIORATA
+        for (let idx = startRow; idx < rows.length; idx++) {
+            const row = rows[idx];
+            
+            // Skip righe vuote o troppo corte
+            if (!row || row.length < 3) {
+                console.log(`⚠️ Skip riga ${idx}: vuota o troppo corta`);
+                continue;
+            }
+            
+            // ✅ RICERCA CODICE P120 ROBUSTA
+            let codice = null;
+            let codeIndex = -1;
+            
+            // Cerca nelle prime 8 colonne
+            for (let i = 0; i < Math.min(8, row.length); i++) {
+                const cell = row[i];
+                if (cell) {
+                    const cellStr = cell.toString().trim();
+                    // Verifica che sia un codice P120 valido (almeno 8 caratteri)
+                    if (cellStr.startsWith('P120') && cellStr.length >= 8) {
+                        codice = cellStr;
+                        codeIndex = i;
+                        console.log(`🎯 CODICE TROVATO alla riga ${idx}, colonna ${i}: "${codice}"`);
+                        break;
+                    }
+                }
+            }
+            
+            if (codice && codice.startsWith('P120')) {
+                console.log(`📊 PROCESSO ITEM ${items.length + 1}: ${codice}`);
+                
+                // ✅ ESTRAZIONE DESCRIZIONE MIGLIORATA
+                let descrizione = '';
+                // Cerca descrizione nelle 3 colonne successive al codice
+                for (let i = codeIndex + 1; i <= codeIndex + 3 && i < row.length; i++) {
+                    const cell = row[i];
+                    if (cell && typeof cell === 'string' && cell.trim().length > 3) {
+                        // Verifica che non sia un numero puro
+                        if (!/^\d+\.?\d*$/.test(cell.trim())) {
+                            descrizione = cell.toString().trim();
+                            console.log(`  📝 Descrizione trovata in colonna ${i}: "${descrizione}"`);
+                            break;
+                        }
+                    }
+                }
+                
+                // Skip se la descrizione è vuota
+                if (!descrizione || descrizione.length < 3) {
+                    console.log(`  ⚠️ Skip ${codice}: descrizione non valida "${descrizione}"`);
+                    continue;
+                }
+                
+                // ✅ ESTRAZIONE DATI NUMERICI INTELLIGENTE + BUDGET
+                let unitaMisura = 'n.';
+                let quantita = 0;
+                let prezzoUnitario = 0;
+                let prezzoTotale = 0;
+                let importoTotale = 0; // BUDGET DELL'ITEM
+                let note = '';
+                
+                console.log(`  🔍 Analisi valori numerici riga ${idx}:`, row.slice(codeIndex + 2));
+                
+                // 🔍 ANALISI DETTAGLIATA DI TUTTE LE COLONNE PER IDENTIFICARE LA STRUTTURA CORRETTA
+                console.log(`    🗂️ Tutte le colonne della riga ${idx}:`);
+                for (let colIdx = 0; colIdx < row.length; colIdx++) {
+                    const cell = row[colIdx];
+                    if (cell !== null && cell !== undefined && cell !== '') {
+                        const cellStr = cell.toString();
+                        const isNumber = !isNaN(parseFloat(cellStr.replace(',', '.')));
+                        const isUnit = /^[a-zA-Z]{1,10}\.?$/.test(cellStr.trim());
+                        console.log(`      Col[${colIdx}]: "${cellStr}" | Numero:${isNumber} | UnitàMisura:${isUnit}`);
+                    }
+                }
+                
+                // � LETTURA DIRETTA COLONNE PREVENTIVO STANDARD
+                // Colonna E (indice 4): Unità di Misura
+                if (row.length > 4 && row[4] !== null && row[4] !== undefined && row[4] !== '') {
+                    const cellE = row[4];
+                    const umStr = cellE.toString().trim();
+                    if (umStr && /^[a-zA-Z]{1,10}\.?$/.test(umStr)) {
+                        unitaMisura = umStr;
+                        console.log(`    📏 ✅ Unità Misura dalla colonna E: "${unitaMisura}"`);
+                    }
+                }
+                
+                // Colonna F (indice 5): QUANTITÀ MASSIMA DISPONIBILE PER L'ITEM
+                // 🎯 QUESTA È LA COLONNA GIUSTA: F = Quantità massima che può essere consumata
+                if (row.length > 5 && row[5] !== null && row[5] !== undefined && row[5] !== '') {
+                    const cellF = row[5];
+                    const qtaNum = parseFloat(cellF.toString().replace(',', '.'));
+                    if (!isNaN(qtaNum) && qtaNum > 0) {
+                        quantita = qtaNum;
+                        console.log(`    📊 ✅ QUANTITÀ MASSIMA DISPONIBILE dalla colonna F: ${quantita} (questo è il limite per le produzioni)`);
+                    }
+                }
+                
+                // Colonna G (indice 6): PREZZO UNITARIO (€/unità)
+                // 🎯 QUESTA È LA COLONNA G: Prezzo per singola unità di misura
+                if (row.length > 6 && row[6] !== null && row[6] !== undefined && row[6] !== '') {
+                    const cellG = row[6];
+                    const prezzoNum = parseFloat(cellG.toString().replace(',', '.'));
+                    if (!isNaN(prezzoNum) && prezzoNum > 0) {
+                        prezzoUnitario = prezzoNum;
+                        console.log(`    💶 ✅ Prezzo Unitario dalla colonna G: €${prezzoUnitario.toFixed(2)}`);
+                    }
+                }
+                
+                // 💰 PRIORITÀ MASSIMA: IMPORTO TOTALE dalla colonna G (indice 6) - FORMATTAZIONE CONTABILITÀ
+                if (row.length > 6 && row[6] !== null && row[6] !== undefined && row[6] !== '') {
+                    const cellG = row[6];
+                    console.log(`    🔍 Colonna G (indice 6) IMPORTO TOTALE valore grezzo: "${cellG}" (tipo: ${typeof cellG})`);
+                    
+                    // 🔧 PARSING ROBUSTO PER VALORI CONTABILITÀ EXCEL
+                    let importoG = 0;
+                    if (typeof cellG === 'number') {
+                        // Se è già un numero, usalo direttamente
+                        importoG = cellG;
+                        console.log(`    💰 ✅ Numero diretto dalla colonna G (Importo Totale): €${importoG.toFixed(2)}`);
+                    } else {
+                        // Se è una stringa, puliscila da formattazione contabilità
+                        const cellStr = cellG.toString()
+                            .replace(/[€$£¥₹]/g, '') // Rimuovi simboli valuta
+                            .replace(/\s+/g, '') // Rimuovi spazi
+                            .replace(/[()]/g, '') // Rimuovi parentesi (valori negativi)
+                            .replace(/,/g, '.') // Sostituisci virgole con punti
+                            .replace(/[^\d.-]/g, ''); // Rimuovi tutto tranne numeri, punti e trattini
+                        
+                        importoG = parseFloat(cellStr);
+                        console.log(`    💰 Parsing string G: "${cellG}" -> "${cellStr}" -> ${importoG}`);
+                    }
+                    
+                    if (!isNaN(importoG) && importoG > 0) {
+                        importoTotale = importoG;
+                        console.log(`    💰 ✅ IMPORTO TOTALE estratto dalla colonna G: €${importoTotale.toFixed(2)}`);
+                    } else {
+                        console.log(`    ⚠️ Colonna G: valore non valido "${cellG}" -> ${importoG}`);
+                    }
+                } else {
+                    console.log(`    ❌ Colonna G: non disponibile o vuota (lunghezza row: ${row.length})`);
+                }
+                
+                // 🔄 FALLBACK: Se colonne standard non hanno dati, analizza tutte le celle
+                if (quantita === 0 || prezzoUnitario === 0 || (importoTotale === 0 && prezzoTotale === 0)) {
+                    console.log(`    🔄 FALLBACK: analisi celle generica per valori mancanti`);
+                    for (let i = codeIndex + 2; i < row.length; i++) {
+                        const cell = row[i];
+                        if (cell !== null && cell !== undefined && cell !== '') {
+                            const cellStr = cell.toString().trim();
+                            const numVal = parseFloat(cellStr.replace(',', '.'));
+                            
+                            if (!isNaN(numVal) && numVal !== 0) {
+                                // Skip colonne già processate
+                                if (i === 4 || i === 5 || i === 6 || i === 7) continue;
+                                
+                                // Logica per assegnare i valori numerici mancanti
+                                if (quantita === 0 && numVal > 0) {
+                                    quantita = numVal;
+                                    console.log(`    ✅ Quantità (fallback): ${quantita}`);
+                                } else if (prezzoUnitario === 0 && numVal > 0) {
+                                    prezzoUnitario = numVal;
+                                    console.log(`    ✅ Prezzo unitario (fallback): ${prezzoUnitario}`);
+                                } else if (prezzoTotale === 0 && numVal > 0 && importoTotale === 0) {
+                                    prezzoTotale = numVal;
+                                    console.log(`    ✅ Prezzo totale (fallback): ${prezzoTotale}`);
+                                }
+                            } else if (cellStr.length > 0 && cellStr.length < 15 && unitaMisura === 'n.') {
+                                // Unità di misura come fallback
+                                if (/^[a-zA-Z]{1,10}\.?$/.test(cellStr)) {
+                                    unitaMisura = cellStr;
+                                    console.log(`    ✅ Unità misura (fallback): ${unitaMisura}`);
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // 💰 COLONNA H (indice 7): IMPORTO TOTALE (F × G) - BUDGET DELL'ITEM
+                let budgetColonnaH = 0;
+                if (row.length > 7 && row[7] !== null && row[7] !== undefined && row[7] !== '') {
+                    const cellH = row[7];
+                    console.log(`    🔍 Colonna H (indice 7) BUDGET TOTALE valore grezzo: "${cellH}" (tipo: ${typeof cellH})`);
+                    
+                    // 🔧 PARSING ROBUSTO PER VALORI CONTABILITÀ EXCEL
+                    let importoH = 0;
+                    if (typeof cellH === 'number') {
+                        importoH = cellH;
+                    } else if (typeof cellH === 'string') {
+                        const valorePulito = cellH
+                            .replace(/[€$\s]/g, '')
+                            .replace(/\./g, '')
+                            .replace(/,/g, '.')
+                            .trim();
+                        
+                        if (valorePulito && !isNaN(valorePulito)) {
+                            importoH = parseFloat(valorePulito);
+                        }
+                    }
+                    
+                    if (!isNaN(importoH) && importoH > 0) {
+                        budgetColonnaH = importoH;
+                        console.log(`    💰 ✅ BUDGET TOTALE dalla colonna H: €${budgetColonnaH.toFixed(2)}`);
+                    }
+                }
+                
+                // ✅ VALIDAZIONE E CALCOLI CON BUDGET - PRIORITÀ COLONNA H
+                // PRIORITÀ ASSOLUTA: Se abbiamo l'importo totale dalla colonna H, usalo come budget
+                let budgetItem = 0;
+                
+                if (budgetColonnaH > 0) {
+                    // 🎯 PRIORITÀ MASSIMA: Usa sempre il valore dalla colonna H (BUDGET TOTALE) se disponibile
+                    budgetItem = budgetColonnaH;
+                    console.log(`  💰 ✅ Budget principale dalla colonna H (BUDGET TOTALE): €${budgetItem.toFixed(2)}`);
+                } else if (importoTotale > 0) {
+                    // 🎯 FALLBACK 1: Usa il valore dalla colonna G se H non è disponibile
+                    budgetItem = importoTotale;
+                    console.log(`  💰 ⚠️ Budget fallback dalla colonna G (dovrebbe essere in H): €${budgetItem.toFixed(2)}`);
+                } else {
+                    // FALLBACK 2: Solo se colonne H e G non hanno valori, calcola
+                    if (prezzoTotale === 0 && quantita > 0 && prezzoUnitario > 0) {
+                        prezzoTotale = quantita * prezzoUnitario;
+                        console.log(`  🧮 Budget calcolato (F × G): ${prezzoTotale}`);
+                    }
+                    
+                    if (prezzoTotale > 0) {
+                        budgetItem = prezzoTotale;
+                        console.log(`  💰 Budget derivato da calcolo (F × G): ${budgetItem}`);
+                    }
+                }
+                
+                // Se quantità è 0 ma abbiamo prezzi, imposta quantità a 1
+                if (quantita === 0 && (prezzoUnitario > 0 || prezzoTotale > 0 || budgetItem > 0)) {
+                    quantita = 1;
+                    console.log(`  🔧 Quantità impostata a 1 (default)`);
+                }
+                
+                const categoria = this.determineCategory(codice, descrizione);
+                
+                const item = {
+                    id: items.length,
+                    codiceMateriale: codice,
+                    descrizione: descrizione,
+                    unitaMisura: unitaMisura,
+                    quantita: quantita, // 🎯 COLONNA F: QUANTITÀ MASSIMA DISPONIBILE (limite per produzioni)
+                    prezzoUnitario: prezzoUnitario, // 🎯 COLONNA G: PREZZO UNITARIO
+                    prezzoTotale: budgetItem, // 🎯 COLONNA H: TOTALE (F × G)
+                    budgetTotale: budgetItem, // Campo dedicato per il budget
+                    note: note,
+                    categoria,
+                    produzione: [],
+                    completamento: 0,
+                    consumato: 0
+                };
+                
+                items.push(item);
+                console.log(`✅ ITEM CREATO: ${codice} | ${categoria} | "${descrizione.substring(0, 30)}..." | UM:${unitaMisura} | 🎯 F(QtyMAX):${quantita} | G(PrezzoUnit):€${prezzoUnitario.toFixed(2)} | H(BUDGET):€${budgetItem.toFixed(2)}`);
+            }
+        }
+        
+        console.log(`🎯 ESTRAZIONE COMPLETATA: ${items.length} item trovati`);
+        
+        // ✅ DEBUG FINALE SE NESSUN ITEM TROVATO
+        if (items.length === 0) {
+            console.error('❌ NESSUN ITEM TROVATO! ANALISI DETTAGLIATA:');
+            console.log('📊 Struttura Excel analizzata:');
+            
+            // Mostra le prime 30 righe con più dettagli
+            for (let idx = 0; idx < Math.min(30, rows.length); idx++) {
+                const row = rows[idx];
+                if (row && row.length > 0) {
+                    console.log(`RIGA ${idx.toString().padStart(2, '0')}:`, 
+                        row.map((cell, i) => `[${i}]=${cell ? (typeof cell === 'string' ? `"${cell}"` : cell) : 'null'}`)
+                            .slice(0, 10).join(' | ')
+                    );
+                    
+                    // Cerca potenziali codici
+                    row.forEach((cell, colIdx) => {
+                        if (cell && cell.toString().includes('P12')) {
+                            console.log(`  🔍 POTENZIALE CODICE in riga ${idx}, col ${colIdx}: "${cell}"`);
+                        }
+                    });
+                }
+            }
+            
+            console.log('💡 SUGGERIMENTI:');
+            console.log('  - Verifica che il file Excel contenga codici che iniziano con "P120"');
+            console.log('  - Controlla che le colonne abbiano descrizioni valide');
+            console.log('  - Il file potrebbe avere un formato diverso dal previsto');
+        }
+        
+        return items;
+    },
+    
+    determineCategory(codice, descrizione) {
+        for (const [cat, info] of Object.entries(this.config.categories)) {
+            if (info.patterns.some(p => p.test(codice))) return cat;
+        }
+        return 'servizi';
+    },
+    
+    // 🧠 SISTEMA IMPORT INTELLIGENTE v3.0
+    openImportRapportino() {
+        this.showModal('import', this.getImportModalContent());
+    },
+    
+    getImportModalContent() {
+        return `
+            <h2>🧠 Import Rapportino Intelligente v3.0</h2>
+            <div class="alert alert-info">
+                <strong>🎯 SISTEMA AUTOMATICO POTENZIATO</strong><br>
+                • <strong>ESTRAZIONE OPERATORI:</strong> Trova automaticamente tutti i nomi<br>
+                • <strong>DESCRIZIONI ATTIVITÀ:</strong> Riconosce automaticamente le attività<br>
+                • <strong>COLONNE MULTIPLE:</strong> Separa automaticamente operatori per lo stesso ITEM<br>
+                • <strong>TICKET COMPLETO:</strong> Include TUTTI gli item ODL anche senza produzione
+            </div>
+            <div class="upload-area" onclick="document.getElementById('rapportinoFileInput').click()">
+                <div>📁 Seleziona rapportino Excel/CSV</div>
+                <div style="opacity: 0.8;">🧠 Estrazione automatica operatori e attività</div>
+                <input type="file" id="rapportinoFileInput" accept=".xlsx,.xls,.csv" style="display: none;" 
+                       onchange="app.processRapportinoSmart(this.files[0])">
+            </div>
+            <div id="importResults"></div>
+        `;
+    },
+    
+    // 🧠 PROCESSORE RAPPORTINO INTELLIGENTE v3.0
+    processRapportinoSmart(file) {
+        if (!file?.name.match(/\.(xlsx|xls|csv)$/i)) {
+            alert('⚠️ Seleziona un file Excel o CSV');
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const workbook = XLSX.read(new Uint8Array(e.target.result), {type: 'array'});
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                
+                // MOSTRA SCELTA MODALITÀ IMPORT
+                this.mostraSceltaModalitaImport(sheet);
+                
+            } catch (error) {
+                alert('❌ Errore: ' + error.message);
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    },
+    
+    // 🆕 MOSTRA SCELTA MODALITÀ IMPORT
+    mostraSceltaModalitaImport(sheet) {
+        const html = `
+            <div class="alert alert-info">
+                <h3>📋 SCEGLI MODALITÀ DI IMPORT</h3>
+                <p>Seleziona come vuoi estrarre i dati dal rapportino</p>
+            </div>
+            
+            <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="panel" style="text-align: center; cursor: pointer; padding: 20px;" 
+                     onclick="app.eseguiImportIntelligente('${this.escapeJsonForHtml(sheet)}')">
+                    <h3>🧠 MODALITÀ INTELLIGENTE</h3>
+                    <p>Scansiona tutto il foglio automaticamente</p>
+                    <div class="badge badge-servizi">Raccomandato per rapportini variabili</div>
+                </div>
+                
+                <div class="panel" style="text-align: center; cursor: pointer; padding: 20px;" 
+                     onclick="app.eseguiImportHardcoded('${this.escapeJsonForHtml(sheet)}')">
+                    <h3>🎯 MODALITÀ HARDCODED</h3>
+                    <p>Estrae solo dalle celle specifiche fisse</p>
+                    <div class="badge badge-manodopera">Celle: B11-B22, J11-J22, A26-A35, A38</div>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('importResults').innerHTML = html;
+    },
+    
+    // 🧠 ESTRAZIONE AUTOMATICA COMPLETA
+    estrazioneAutomaticaCompleta(sheet) {
+        const risultati = {
+            dataLavoro: null,
+            operatori: new Set(),
+            attivita: new Map(),
+            produzioni: [],
+            statistiche: {
+                celleAnalizzate: 0,
+                operatoriTrovati: 0,
+                attivitaTrovate: 0,
+                produzioniCreate: 0
+            }
+        };
+        
+        // Estrai data dal rapportino
+        risultati.dataLavoro = this.estraiDataRapportino(sheet);
+        
+        // Scansiona TUTTO il foglio per trovare operatori e attività
+        const range = XLSX.utils.decode_range(sheet['!ref']);
+        
+        for (let row = range.s.r; row <= range.e.r; row++) {
+            for (let col = range.s.c; col <= range.e.c; col++) {
+                const cellRef = XLSX.utils.encode_cell({r: row, c: col});
+                const cellValue = this.getCellValue(sheet, cellRef);
+                
+                if (cellValue && typeof cellValue === 'string') {
+                    risultati.statistiche.celleAnalizzate++;
+                    
+                    // RICONOSCIMENTO AUTOMATICO OPERATORI
+                    if (this.sembraNomeOperatore(cellValue)) {
+                        risultati.operatori.add(cellValue.trim());
+                        risultati.statistiche.operatoriTrovati++;
+                    }
+                    
+                    // RICONOSCIMENTO AUTOMATICO ATTIVITÀ
+                    if (this.sembraDescrizioneAttivita(cellValue)) {
+                        const attivitaPulita = this.pulisciDescrizioneAttivita(cellValue);
+                        const dataKey = `${row}_${col}`;
+                        risultati.attivita.set(dataKey, attivitaPulita);
+                        risultati.statistiche.attivitaTrovate++;
+                    }
+                }
+            }
+        }
+        
+        // ESTRAZIONE AUTOMATICA PRODUZIONI
+        risultati.produzioni = this.estraiProduzioniAutomatiche(sheet, risultati);
+        risultati.statistiche.produzioniCreate = risultati.produzioni.length;
+        
+        return risultati;
+    },
+    
+    // 🧠 RICONOSCIMENTO NOMI OPERATORI
+    sembraNomeOperatore(testo) {
+        const testoTrim = testo.trim();
+        
+        // Regole per riconoscere nomi operatori
+        if (testoTrim.length < 3 || testoTrim.length > 25) return false;
+        if (!/^[A-Z][a-zA-Z\s']+$/.test(testoTrim)) return false;
+        if (/\d/.test(testoTrim)) return false;
+        if (testoTrim.includes('€') || testoTrim.includes('%')) return false;
+        
+        // Esclude parole tecniche comuni
+        const paroleTecniche = [
+            'TOTALE', 'PARZIALE', 'SUBTOTALE', 'IMPORTO', 'PREZZO', 'QUANTITA',
+            'DESCRIZIONE', 'CODICE', 'UNITA', 'MISURA', 'MATERIALE', 'LAVORO',
+            'OPERAZIONI', 'ATTIVITA', 'SERVIZIO', 'FORNITURA', 'NOLEGGIO'
+        ];
+        
+        if (paroleTecniche.some(p => testoTrim.toUpperCase().includes(p))) return false;
+        
+        // Deve contenere almeno una sillaba tipica di nomi italiani
+        const sillabe = ['bucch', 'bord', 'ross', 'bian', 'verd', 'mari', 'giov', 'fran', 'carl', 'ant'];
+        if (sillabe.some(s => testoTrim.toLowerCase().includes(s))) return true;
+        
+        // Nomi con almeno 2 parti (nome cognome)
+        const parti = testoTrim.split(/\s+/);
+        return parti.length >= 2 && parti.every(p => p.match(/^[A-Z][a-z]+$/));
+    },
+    
+    // 🧠 RICONOSCIMENTO DESCRIZIONI ATTIVITÀ
+    sembraDescrizioneAttivita(testo) {
+        const testoLower = testo.toLowerCase();
+        
+        // Deve contenere almeno una parola chiave di attività
+        return this.config.parolachiaveAttivita.some(parola => testoLower.includes(parola));
+    },
+    
+    // 🧠 PULISCI DESCRIZIONE ATTIVITÀ
+    pulisciDescrizioneAttivita(testo) {
+        return testo.trim()
+            .replace(/^[0-9\.\-\s]+/, '') // Rimuovi numerazione iniziale
+            .replace(/\s+/g, ' ') // Normalizza spazi
+            .replace(/[^\w\s\-àèéìòù]/gi, '') // Rimuovi caratteri speciali
+            .substring(0, 50); // Limita lunghezza
+    },
+    
+    // 🧠 ESTRAI DATA RAPPORTINO
+    estraiDataRapportino(sheet) {
+        // Cerca nelle prime 15 righe
+        for (let row = 0; row < 15; row++) {
+            for (let col = 0; col < 10; col++) {
+                const cellRef = XLSX.utils.encode_cell({r: row, c: col});
+                const cellValue = this.getCellValue(sheet, cellRef);
+                
+                if (cellValue && typeof cellValue === 'string') {
+                    if (cellValue.includes('Rapporto di Lavoro del')) {
+                        // Cerca la data nella cella successiva
+                        const nextCellRef = XLSX.utils.encode_cell({r: row, c: col + 2});
+                        const dataValue = this.getCellValue(sheet, nextCellRef);
+                        const dataParsed = this.parseDate(dataValue);
+                        if (dataParsed) return dataParsed;
+                    }
+                }
+            }
+        }
+        
+        // Fallback: data di oggi
+        return new Date().toISOString().split('T')[0];
+    },
+    
+    // 🧠 ESTRAI PRODUZIONI AUTOMATICHE
+    estraiProduzioniAutomatiche(sheet, risultati) {
+        const produzioni = [];
+        
+        // Zone tipiche del rapportino
+        const zoneRapportino = [
+            { nome: 'Personale', rows: [10, 25], cols: [1, 3] },
+            { nome: 'Mezzi', rows: [10, 25], cols: [9, 13] },
+            { nome: 'Forniture', rows: [25, 40], cols: [0, 3] }
+        ];
+        
+        zoneRapportino.forEach(zona => {
+            for (let row = zona.rows[0]; row <= zona.rows[1]; row++) {
+                const descrizione = this.getCellValue(sheet, XLSX.utils.encode_cell({r: row, c: zona.cols[0]}));
+                const quantita = parseFloat(this.getCellValue(sheet, XLSX.utils.encode_cell({r: row, c: zona.cols[1]})));
+                
+                if (descrizione && quantita && quantita > 0) {
+                    // Trova il codice ODL corrispondente
+                    const codiceODL = this.trovaCodiceDaDescrizione(descrizione, zona.nome);
+                    
+                    if (codiceODL) {
+                        const operatore = this.trovaOperatoreVicino(sheet, row, zona.cols[0]);
+                        const attivita = this.trovaAttivitaVicina(sheet, row, risultati.attivita);
+                        
+                        produzioni.push({
+                            data: risultati.dataLavoro,
+                            codice: codiceODL,
+                            quantita: quantita,
+                            operatore: operatore || 'Operatore generico',
+                            attivita: attivita || 'Attività varie',
+                            zona: zona.nome,
+                            categoria: this.determinaCategoriaFromZona(zona.nome)
+                        });
+                    }
+                }
+            }
+        });
+        
+        return produzioni;
+    },
+    
+    // 🧠 TROVA OPERATORE VICINO
+    trovaOperatoreVicino(sheet, targetRow, targetCol) {
+        // Cerca nell'intorno della cella
+        for (let rowOffset = -2; rowOffset <= 2; rowOffset++) {
+            for (let colOffset = -2; colOffset <= 2; colOffset++) {
+                const cellRef = XLSX.utils.encode_cell({r: targetRow + rowOffset, c: targetCol + colOffset});
+                const cellValue = this.getCellValue(sheet, cellRef);
+                
+                if (cellValue && this.sembraNomeOperatore(cellValue)) {
+                    return cellValue.trim();
+                }
+            }
+        }
+        return null;
+    },
+    
+    // 🧠 TROVA ATTIVITÀ VICINA
+    trovaAttivitaVicina(sheet, targetRow, mappaAttivita) {
+        // Cerca l'attività più vicina
+        let attivitaVicina = null;
+        let distanzaMinima = Infinity;
+        
+        mappaAttivita.forEach((attivita, key) => {
+            const [row, col] = key.split('_').map(Number);
+            const distanza = Math.abs(row - targetRow);
+            
+            if (distanza < distanzaMinima) {
+                distanzaMinima = distanza;
+                attivitaVicina = attivita;
+            }
+        });
+        
+        return attivitaVicina;
+    },
+    
+    // 🧠 TROVA CODICE DA DESCRIZIONE
+    trovaCodiceDaDescrizione(descrizione, zona) {
+        const desc = descrizione.toLowerCase();
+        
+        // Mapping intelligente per zona
+        const mappingZone = {
+            'Personale': {
+                'capo': 'P12002630',
+                'operaio': 'P120026314',
+                'tecnico': 'P12002630'
+            },
+            'Mezzi': {
+                'piattaforma': 'P120028254',
+                'aspiratore': 'P120028686',
+                'muletto': 'P120028688',
+                'telescopico': 'P120029262'
+            },
+            'Forniture': {
+                'ldpe': 'P120027834',
+                'cartello': 'P120029110',
+                'nastro': 'P120029288',
+                'filtro': 'P120029293'
+            }
+        };
+        
+        const mappings = mappingZone[zona] || {};
+        
+        for (const [keyword, codice] of Object.entries(mappings)) {
+            if (desc.includes(keyword)) {
+                return codice;
+            }
+        }
+        
+        // Fallback: cerca negli item esistenti
+        const itemTrovato = this.state.itemsData.find(item => 
+            item.descrizione.toLowerCase().includes(desc.substring(0, 10))
+        );
+        
+        return itemTrovato?.codiceMateriale || null;
+    },
+    
+    // 🧠 DETERMINA CATEGORIA DA ZONA
+    determinaCategoriaFromZona(zona) {
+        const mappingCategorie = {
+            'Personale': 'manodopera',
+            'Mezzi': 'noleggi',
+            'Forniture': 'materiali'
+        };
+        return mappingCategorie[zona] || 'servizi';
+    },
+    
+    // 🧠 MOSTRA RISULTATI ESTRAZIONE
+    mostraRisultatiEstrazione(risultati) {
+        let html = `
+            <div class="alert alert-success">
+                <strong>🧠 ESTRAZIONE AUTOMATICA COMPLETATA</strong><br>
+                📊 ${risultati.statistiche.celleAnalizzate} celle analizzate<br>
+                👥 ${risultati.operatori.size} operatori trovati<br>
+                📋 ${risultati.statistiche.attivitaTrovate} attività riconosciute<br>
+                🔧 ${risultati.statistiche.produzioniCreate} produzioni create<br>
+                📅 Data lavoro: ${new Date(risultati.dataLavoro).toLocaleDateString('it-IT')}
+            </div>
+        `;
+        
+        // Mostra operatori trovati
+        if (risultati.operatori.size > 0) {
+            html += `
+                <div class="panel mt-2">
+                    <h4>👥 OPERATORI RICONOSCIUTI AUTOMATICAMENTE</h4>
+                    <div class="grid grid-auto">
+                        ${Array.from(risultati.operatori).map(op => 
+                            `<div class="badge badge-manodopera">${op}</div>`
+                        ).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Mostra attività trovate
+        if (risultati.attivita.size > 0) {
+            html += `
+                <div class="panel mt-2">
+                    <h4>📋 ATTIVITÀ RICONOSCIUTE AUTOMATICAMENTE</h4>
+                    <div style="max-height: 200px; overflow-y: auto;">
+                        ${Array.from(new Set(risultati.attivita.values())).map(att => 
+                            `<div class="badge badge-servizi">${att}</div>`
+                        ).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        if (risultati.produzioni.length > 0) {
+            html += `
+                <button class="btn btn-success mt-2" onclick="app.eseguiImportAutomatico(${JSON.stringify(risultati).replace(/"/g, '&quot;')})">
+                    🚀 Importa Tutto (${risultati.produzioni.length} produzioni)
+                </button>
+            `;
+        }
+        
+        document.getElementById('importResults').innerHTML = html;
+        
+        // Salva risultati per export
+        this.state.operatoriEstratti = risultati.operatori;
+        this.state.descrizioniAttivita = risultati.attivita;
+    },
+    
+    // 🧠 ESEGUI IMPORT AUTOMATICO
+    eseguiImportAutomatico(risultati) {
+        let imported = 0, errors = 0;
+        
+        risultati.produzioni.forEach(prod => {
+            const item = this.state.itemsData.find(i => i.codiceMateriale === prod.codice);
+            if (item) {
+                const produzione = {
+                    data: prod.data,
+                    risorsa: prod.operatore,
+                    quantita: prod.quantita,
+                    unitaMisura: item.unitaMisura,
+                    note: `${prod.attivita} - Import automatico v3.0`,
+                    tipo: 'economia',
+                    attivita: prod.attivita,
+                    operatore: prod.operatore
+                };
+                
+                if (this.addProduction(item, produzione)) {
+                    imported++;
+                } else {
+                    errors++;
+                }
+            } else {
+                errors++;
+            }
+        });
+        
+        this.saveToStorage();
+        this.updateView();
+        this.hideModal();
+        this.toast(`✅ Import automatico completato!\n🟢 ${imported} importati\n❌ ${errors} errori`);
+    },
+    
+    // 🧠 TROVA CODICE MATCHING PER IMPORT
+    findMatchingCode(descrizione, categoria, isCape = false) {
+        const desc = descrizione.toLowerCase();
+        
+        // Mapping specifico per categoria
+        const mappings = {
+            manodopera: {
+                patterns: [
+                    { keywords: ['capo', 'responsabile', 'leader'], code: 'P12002630' },
+                    { keywords: ['operaio', 'operatore', 'tecnico'], code: 'P120026314' },
+                    { keywords: ['specialista', 'esperto'], code: 'P12002630' }
+                ],
+                default: isCape ? 'P12002630' : 'P120026314'
+            },
+            noleggi: {
+                patterns: [
+                    { keywords: ['piattaforma', 'elev', 'platform'], code: 'P120028254' },
+                    { keywords: ['aspiratore', 'aspira', 'vacuum'], code: 'P120028686' },
+                    { keywords: ['muletto', 'carrello', 'fork'], code: 'P120028688' },
+                    { keywords: ['telescopico', 'telehandler'], code: 'P120029262' }
+                ],
+                default: 'P120028254'
+            },
+            materiali: {
+                patterns: [
+                    { keywords: ['ldpe', 'plastica', 'film'], code: 'P120027834' },
+                    { keywords: ['cartello', 'segnale', 'avviso'], code: 'P120029110' },
+                    { keywords: ['nastro', 'tape', 'sigill'], code: 'P120029288' },
+                    { keywords: ['filtro', 'filter'], code: 'P120029293' }
+                ],
+                default: 'P120027834'
+            }
+        };
+        
+        const categoryMappings = mappings[categoria];
+        if (!categoryMappings) return null;
+        
+        // Cerca match per parole chiave
+        for (const pattern of categoryMappings.patterns) {
+            if (pattern.keywords.some(keyword => desc.includes(keyword))) {
+                return pattern.code;
+            }
+        }
+        
+        // Cerca negli item esistenti
+        const matchedItem = this.state.itemsData.find(item => 
+            item.categoria === categoria && 
+            item.descrizione.toLowerCase().includes(desc.substring(0, 5))
+        );
+        
+        return matchedItem ? matchedItem.codiceMateriale : categoryMappings.default;
+    },
+    
+    parseRapportinoNico(worksheet, sheetName) {
+        const produzioni = [];
+        const data = this.getCellValue(worksheet, 'G4');
+        const dataFormattata = this.parseDate(data);
+        
+        if (!dataFormattata) {
+            return { produzioni: [], errori: [`Data non valida: ${data}`], info: { sheetName } };
+        }
+        
+        // Personale B11:C22
+        for (let r = 11; r <= 22; r++) {
+            const nome = this.getCellValue(worksheet, `B${r}`);
+            const ore = parseFloat(this.getCellValue(worksheet, `C${r}`));
+            
+            if (nome && ore) {
+                const codice = this.findMatchingCode(nome, 'manodopera', r === 11);
+                produzioni.push({
+                    data: dataFormattata,
+                    codice: codice || `PERSON_${r}`,
+                    quantita: ore,
+                    risorsa: nome,
+                    note: `${r === 11 ? 'Capo Cantiere' : 'Operaio'} - Auto Import NICO`,
+                    categoria: 'manodopera',
+                    tipo: 'personale'
+                });
+            }
+        }
+        
+        // Mezzi J11:M22
+        for (let r = 11; r <= 22; r++) {
+            const mezzo = this.getCellValue(worksheet, `J${r}`);
+            const quantita = parseFloat(this.getCellValue(worksheet, `M${r}`));
+            
+            if (mezzo && quantita) {
+                const codice = this.findMatchingCode(mezzo, 'noleggi');
+                produzioni.push({
+                    data: dataFormattata,
+                    codice: codice || `MEZZO_${r}`,
+                    quantita,
+                    risorsa: mezzo,
+                    note: 'Mezzo/Attrezzatura - Auto Import NICO',
+                    categoria: 'noleggi',
+                    tipo: 'mezzo'
+                });
+            }
+        }
+        
+        // Forniture A26:C35
+        for (let r = 26; r <= 35; r++) {
+            const fornitura = this.getCellValue(worksheet, `A${r}`);
+            const quantita = parseFloat(this.getCellValue(worksheet, `C${r}`));
+            
+            if (fornitura && quantita) {
+                const codice = this.findMatchingCode(fornitura, 'materiali');
+                produzioni.push({
+                    data: dataFormattata,
+                    codice: codice || `FORN_${r}`,
+                    quantita,
+                    risorsa: 'Fornitura',
+                    note: `Materiale: ${fornitura} - Auto Import NICO`,
+                    categoria: 'materiali',
+                    tipo: 'fornitura'
+                });
+            }
+        }
+        
+        return { produzioni, errori: [], info: { sheetName, dataLavorata: dataFormattata } };
+    },
+    
+    executeNicoImport(results) {
+        let imported = 0, errors = 0;
+        
+        results.forEach(result => {
+            result.produzioni.forEach(prod => {
+                const item = this.state.itemsData.find(i => i.codiceMateriale === prod.codice);
+                if (item && this.addProduction(item, prod)) {
+                    imported++;
+                } else {
+                    errors++;
+                }
+            });
+        });
+        
+        this.saveToStorage();
+        this.updateView();
+        this.hideModal();
+        this.toast(`✅ Import completato!\n${imported} importati, ${errors} errori`);
+    },
+    
+    // Manual Mapping
+    handleManualMapping(workbook) {
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(sheet, {header: 1});
+        this.state.rapportinoData = this.analyzeRapportino(jsonData);
+        this.showManualMappingInterface();
+    },
+    
+    analyzeRapportino(rows) {
+        const result = { data: null, personale: [], mezzi: [], forniture: [] };
+        
+        // Estrai data e info header
+        rows.slice(0, 15).forEach(row => {
+            if (row[4] === 'Rapporto di Lavoro del : ' && row[6]) {
+                result.data = this.parseDate(row[6]);
+            }
+        });
+        
+        // Personale righe 10-24
+        rows.slice(10, 25).forEach(row => {
+            if (row[1] && row[2] && !isNaN(row[2])) {
+                result.personale.push({ nome: row[1].toString().trim(), ore: parseFloat(row[2]) });
+            }
+        });
+        
+        // Mezzi righe 10-24 colonne J-M
+        rows.slice(10, 25).forEach(row => {
+            if (row[9] && row[12] && !isNaN(row[12])) {
+                result.mezzi.push({ tipologia: row[9].toString().trim(), quantita: parseFloat(row[12]) });
+            }
+        });
+        
+        // Forniture righe 25-40
+        rows.slice(25, 40).forEach(row => {
+            if (row[0] && row[2] && !isNaN(row[2])) {
+                result.forniture.push({ descrizione: row[0].toString().trim(), quantita: parseFloat(row[2]) });
+            }
+        });
+        
+        return result;
+    },
+    
+    showManualMappingInterface() {
+        const data = this.state.rapportinoData;
+        if (!data?.data) {
+            document.getElementById('importResults').innerHTML = '<div class="alert alert-danger">❌ Dati non validi</div>';
+            return;
+        }
+        
+        let html = `
+            <div class="alert alert-info">
+                <strong>🎮 MAPPING MANUALE</strong><br>
+                📅 Data: ${data.data}<br>
+                👥 ${data.personale.length} operai | 🚜 ${data.mezzi.length} mezzi | 📦 ${data.forniture.length} forniture
+            </div>
+        `;
+        
+        // Genera mapping per ogni categoria
+        ['personale', 'mezzi', 'forniture'].forEach(tipo => {
+            if (data[tipo].length > 0) {
+                html += `<div class="panel mt-2"><h4>${this.config.categories[tipo === 'personale' ? 'manodopera' : tipo === 'mezzi' ? 'noleggi' : 'materiali'].emoji} ${tipo.toUpperCase()}</h4>`;
+                
+                data[tipo].forEach((item, idx) => {
+                    const id = `${tipo}_${idx}`;
+                    html += `
+                        <div class="mapping-item included" id="map_${id}">
+                            <input type="checkbox" checked onchange="app.updateMappingStyle('${id}')">
+                            <div style="flex: 1; margin: 0 10px;">
+                                <strong>${item.nome || item.tipologia || item.descrizione}</strong> - 
+                                ${item.ore || item.quantita} ${item.ore ? 'ore' : 'unità'}
+                            </div>
+                            <select class="form-control" style="width: 200px;" id="sel_${id}" onchange="app.updateMappingStyle('${id}')">
+                                ${this.getItemOptions(tipo === 'personale' ? 'manodopera' : tipo === 'mezzi' ? 'noleggi' : 'materiali')}
+                            </select>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+            }
+        });
+        
+        html += `
+            <button class="btn btn-success mt-2" onclick="app.executeManualImport()">
+                💾 Esegui Import
+            </button>
+        `;
+        
+        document.getElementById('importResults').innerHTML = html;
+    },
+    
+    // 🎯 FIX DROPDOWN FORNITURE - Includi SERVIZI nella mappatura
+    getItemOptions(categoria) {
+        let items;
+        let opts = '<option value="">-- Lavoro a Misura --</option>';
+        
+        // ✅ Operai - Solo manodopera (RIMANE UGUALE)
+        if (categoria === 'manodopera') {
+            items = this.state.itemsData.filter(i => i.categoria === 'manodopera');
+            items.forEach(item => {
+                opts += `<option value="${item.codiceMateriale}">${item.codiceMateriale} - ${item.descrizione.substring(0, 40)}...</option>`;
+            });
+        }
+        // ✅ Mezzi - Solo noleggi (RIMANE UGUALE)  
+        else if (categoria === 'noleggi') {
+            items = this.state.itemsData.filter(i => i.categoria === 'noleggi');
+            items.forEach(item => {
+                opts += `<option value="${item.codiceMateriale}">${item.codiceMateriale} - ${item.descrizione.substring(0, 40)}...</option>`;
+            });
+        }
+        // ✅ Forniture - Materiali + Servizi + Tutto il resto (FIX PRINCIPALE)
+        else if (categoria === 'materiali') {
+            // Filtra TUTTO tranne manodopera e noleggi
+            const fornitureItems = this.state.itemsData.filter(item => 
+                item.categoria !== 'manodopera' && 
+                item.categoria !== 'noleggi'
+            );
+            
+            // Prima i materiali
+            const materiali = fornitureItems.filter(item => item.categoria === 'materiali');
+            if (materiali.length > 0) {
+                opts += '<optgroup label="📦 MATERIALI">';
+                materiali.forEach(item => {
+                    opts += `<option value="${item.codiceMateriale}">${item.codiceMateriale} - ${item.descrizione.substring(0, 40)}...</option>`;
+                });
+                opts += '</optgroup>';
+            }
+            
+            // Poi i servizi (QUESTO ERA IL PROBLEMA!)
+            const servizi = fornitureItems.filter(item => item.categoria === 'servizi');
+            if (servizi.length > 0) {
+                opts += '<optgroup label="🔧 SERVIZI">';
+                servizi.forEach(item => {
+                    opts += `<option value="${item.codiceMateriale}">${item.codiceMateriale} - ${item.descrizione.substring(0, 40)}...</option>`;
+                });
+                opts += '</optgroup>';
+            }
+            
+            // Infine tutto il resto (categorie non standard)
+            const altre = fornitureItems.filter(item => 
+                item.categoria !== 'materiali' && 
+                item.categoria !== 'servizi'
+            );
+            if (altre.length > 0) {
+                opts += '<optgroup label="📋 ALTRE CATEGORIE">';
+                altre.forEach(item => {
+                    opts += `<option value="${item.codiceMateriale}">${item.codiceMateriale} - ${item.descrizione.substring(0, 40)}...</option>`;
+                });
+                opts += '</optgroup>';
+            }
+        }
+        // Fallback per altre categorie
+        else {
+            items = this.state.itemsData.filter(i => i.categoria === categoria);
+            items.forEach(item => {
+                opts += `<option value="${item.codiceMateriale}">${item.codiceMateriale} - ${item.descrizione.substring(0, 40)}...</option>`;
+            });
+        }
+        
+        return opts;
+    },
+    
+    updateMappingStyle(id) {
+        const container = document.getElementById(`map_${id}`);
+        const checkbox = container.querySelector('input[type="checkbox"]');
+        const select = document.getElementById(`sel_${id}`);
+        
+        container.className = 'mapping-item';
+        if (!checkbox.checked) {
+            container.classList.add('excluded');
+        } else if (!select.value) {
+            container.classList.add('misura');
+        } else {
+            container.classList.add('included');
+        }
+    },
+    
+    executeManualImport() {
+        const data = this.state.rapportinoData;
+        let economia = 0, misura = 0;
+        const lavoriMisura = [];
+        
+        ['personale', 'mezzi', 'forniture'].forEach(tipo => {
+            data[tipo].forEach((item, idx) => {
+                const id = `${tipo}_${idx}`;
+                const checkbox = document.querySelector(`#map_${id} input[type="checkbox"]`);
+                const select = document.getElementById(`sel_${id}`);
+                
+                if (checkbox?.checked) {
+                    if (select?.value) {
+                        const odlItem = this.state.itemsData.find(i => i.codiceMateriale === select.value);
+                        if (odlItem) {
+                            this.addProduction(odlItem, {
+                                data: data.data,
+                                risorsa: item.nome || item.tipologia || item.descrizione,
+                                quantita: item.ore || item.quantita,
+                                note: `Import manuale ECONOMIA`,
+                                tipo: 'economia'
+                            });
+                            economia++;
+                        }
+                    } else {
+                        lavoriMisura.push({
+                            data: data.data,
+                            tipo,
+                            nome: item.nome || item.tipologia || item.descrizione,
+                            quantita: item.ore || item.quantita,
+                            unitaMisura: item.ore ? 'ore' : 'unità',
+                            note: 'Lavoro a MISURA'
+                        });
+                        misura++;
+                    }
+                }
+            });
+        });
+        
+        // Salva lavori a misura
+        if (lavoriMisura.length > 0) {
+            const esistenti = this.getStorageJson(`lavoriMisura_${this.state.currentOdlId}`);
+            esistenti.push(...lavoriMisura);
+            localStorage.setItem(`lavoriMisura_${this.state.currentOdlId}`, JSON.stringify(esistenti));
+        }
+        
+        this.saveToStorage();
+        this.updateView();
+        this.hideModal();
+        this.toast(`✅ Import completato!\n🟢 Economia: ${economia}\n🟠 Misura: ${misura}`);
+    },
+    
+    // 📁 GESTIONE BACKUP
+    openBackupModal() {
+        const odls = this.getStorageJson('odlsList');
+        const currentOdl = odls[this.state.currentOdlId];
+        
+        this.showModal('backup', `
+            <h2>📁 Gestione Backup ODL</h2>
+            <div class="alert alert-info">
+                <strong>ODL Corrente:</strong> ${currentOdl?.name || 'N/D'}<br>
+                <strong>Items:</strong> ${this.state.itemsData.length}<br>
+                <strong>Ultima modifica:</strong> ${new Date().toLocaleString('it-IT')}
+            </div>
+            
+            <div class="panel mt-2">
+                <h3>💾 Export Backup</h3>
+                <button class="btn btn-success" onclick="app.exportBackup()" style="width: 100%;">
+                    📤 Scarica Backup Completo
+                </button>
+            </div>
+            
+            <div class="panel mt-2">
+                <h3>📥 Import Backup</h3>
+                <div class="upload-area" onclick="document.getElementById('backupFileInput').click()">
+                    <div>📁 Seleziona file backup (.json)</div>
+                    <input type="file" id="backupFileInput" accept=".json" style="display: none;" 
+                           onchange="app.importBackup(this.files[0])">
+                </div>
+            </div>
+            
+            <div class="panel mt-2">
+                <h3>🗑️ Pulizia Dati</h3>
+                <button class="btn btn-danger" onclick="app.cleanOldData()" style="width: 100%;">
+                    🧹 Pulisci ODL Vecchi (>30 giorni)
+                </button>
+            </div>
+        `);
+    },
+    
+    exportBackup() {
+        const backup = {
+            version: this.config.version,
+            timestamp: new Date().toISOString(),
+            odlsList: this.getStorageJson('odlsList'),
+            data: {}
+        };
+        
+        // Esporta tutti gli ODL
+        Object.keys(backup.odlsList).forEach(odlId => {
+            const odlData = this.getStorageJson(`odlData_${odlId}`);
+            const lavoriMisura = this.getStorageJson(`lavoriMisura_${odlId}`);
+            if (Object.keys(odlData).length > 0 || Object.keys(lavoriMisura).length > 0) {
+                backup.data[odlId] = { odlData, lavoriMisura };
+            }
+        });
+        
+        const dataStr = JSON.stringify(backup, null, 2);
+        const blob = new Blob([dataStr], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `DOGG_Backup_${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        
+        this.toast('📤 Backup esportato con successo!');
+    },
+    
+    importBackup(file) {
+        if (!file?.name.endsWith('.json')) {
+            alert('⚠️ Seleziona un file backup JSON valido');
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const backup = JSON.parse(e.target.result);
+                
+                if (!backup.version || !backup.odlsList) {
+                    throw new Error('Formato backup non valido');
+                }
+                
+                // Ripristina ODL
+                localStorage.setItem('odlsList', JSON.stringify(backup.odlsList));
+                
+                // Ripristina dati
+                Object.entries(backup.data || {}).forEach(([odlId, data]) => {
+                    if (data.odlData) {
+                        localStorage.setItem(`odlData_${odlId}`, JSON.stringify(data.odlData));
+                    }
+                    if (data.lavoriMisura) {
+                        localStorage.setItem(`lavoriMisura_${odlId}`, JSON.stringify(data.lavoriMisura));
+                    }
+                });
+                
+                this.loadODLsList();
+                this.hideModal();
+                this.toast(`✅ Backup ripristinato!\n📊 ${Object.keys(backup.odlsList).length} ODL importati`);
+                
+            } catch (error) {
+                alert('❌ Errore import backup: ' + error.message);
+            }
+        };
+        reader.readAsText(file);
+    },
+    
+    cleanOldData() {
+        if (!confirm('🧹 Eliminare tutti gli ODL più vecchi di 30 giorni?')) return;
+        
+        const odls = this.getStorageJson('odlsList');
+        const currentDate = new Date();
+        
+        // Data limite: 30 giorni fa
+        const cutoffDate = new Date(currentDate.setDate(currentDate.getDate() - 30));
+        
+        let deleted = 0;
+        Object.entries(odls).forEach(([odlId, odl]) => {
+            const odlDate = new Date(odl.created || odl.date);
+            if (odlDate < cutoffDate) {
+                delete odls[odlId];
+                localStorage.removeItem(`odlData_${odlId}`);
+                localStorage.removeItem(`lavoriMisura_${odlId}`);
+                deleted++;
+            }
+        });
+        
+        localStorage.setItem('odlsList', JSON.stringify(odls));
+        this.loadODLsList();
+        this.toast(`🧹 Pulizia completata!\n🗑️ ${deleted} ODL eliminati`);
+    },
+    
+    // 🟠 GESTIONE LAVORI A MISURA
+    openLavoriMisuraModal() {
+        const lavori = this.getStorageJson(`lavoriMisura_${this.state.currentOdlId}`);
+        const totale = lavori.reduce((sum, l) => sum + (l.quantita * (l.prezzo || 0)), 0);
+        
+        let lavoriTable = '<div class="table-container"><table><tr><th>Data</th><th>Descrizione</th><th>Q.tà</th><th>U.M.</th><th>Prezzo</th><th>Totale</th><th></th></tr>';
+        
+        if (lavori.length === 0) {
+            lavoriTable += '<tr><td colspan="7" style="text-align: center;">Nessun lavoro a misura</td></tr>';
+        } else {
+            lavori.forEach((lavoro, idx) => {
+                const subtotale = lavoro.quantita * (lavoro.prezzo || 0);
+                lavoriTable += `
+                    <tr>
+                        <td>${lavoro.data}</td>
+                        <td>${lavoro.nome}</td>
+                        <td>${lavoro.quantita}</td>
+                        <td>${lavoro.unitaMisura}</td>
+                        <td>€${(lavoro.prezzo || 0).toFixed(2)}</td>
+                        <td>€${subtotale.toFixed(2)}</td>
+                        <td><button onclick="app.deleteLavoroMisura(${idx})" class="btn-small btn-danger">🗑️</button></td>
+                    </tr>
+                `;
+            });
+        }
+        lavoriTable += '</table></div>';
+        
+        this.showModal('lavori', `
+            <h2>🟠 Lavori a Misura</h2>
+            <div class="alert alert-warning">
+                <strong>Totale Lavori a Misura:</strong> €${totale.toLocaleString('it-IT', {minimumFractionDigits: 2})}
+            </div>
+            
+            ${lavoriTable}
+            
+            <form onsubmit="app.addLavoroMisura(event)" class="mt-2">
+                <h3>➕ Aggiungi Lavoro a Misura</h3>
+                <div class="grid grid-auto">
+                    <input type="date" id="lavoro_data" class="form-control" value="${new Date().toISOString().split('T')[0]}" required>
+                    <input type="text" id="lavoro_nome" class="form-control" placeholder="Descrizione lavoro" required>
+                    <input type="number" id="lavoro_quantita" class="form-control" placeholder="Quantità" step="0.01" required>
+                    <input type="text" id="lavoro_um" class="form-control" placeholder="U.M." value="ore">
+                    <input type="number" id="lavoro_prezzo" class="form-control" placeholder="Prezzo unitario" step="0.01">
+                </div>
+                <textarea class="form-control" id="lavoro_note" placeholder="Note aggiuntive (opzionale)"></textarea>
+                <button type="submit" class="btn btn-warning" style="width: 100%;">🟠 Aggiungi Lavoro a Misura</button>
+            </form>
+        `);
+    },
+    
+    addLavoroMisura(e) {
+        e.preventDefault();
+        
+        const lavoro = {
+            data: document.getElementById('lavoro_data').value,
+            nome: document.getElementById('lavoro_nome').value,
+            quantita: parseFloat(document.getElementById('lavoro_quantita').value),
+            unitaMisura: document.getElementById('lavoro_um').value,
+            prezzo: parseFloat(document.getElementById('lavoro_prezzo').value) || 0,
+            note: document.getElementById('lavoro_note').value,
+            timestamp: Date.now()
+        };
+        
+        const lavori = this.getStorageJson(`lavoriMisura_${this.state.currentOdlId}`);
+        lavori.push(lavoro);
+        localStorage.setItem(`lavoriMisura_${this.state.currentOdlId}`, JSON.stringify(lavori));
+        
+        this.openLavoriMisuraModal(); // Ricarica il modal
+        this.toast('🟠 Lavoro a misura aggiunto!');
+    },
+    
+    deleteLavoroMisura(idx) {
+        if (!confirm('🗑️ Eliminare questo lavoro a misura?')) return;
+        
+        const lavori = this.getStorageJson(`lavoriMisura_${this.state.currentOdlId}`);
+        lavori.splice(idx, 1);
+        localStorage.setItem(`lavoriMisura_${this.state.currentOdlId}`, JSON.stringify(lavori));
+        
+        this.openLavoriMisuraModal(); // Ricarica il modal
+        this.toast('🗑️ Lavoro a misura eliminato');
+    },
+    
+    // 🎫 EXPORT MENSILE POTENZIATO v3.0
+    openExportMensileModal() {
+        const today = new Date();
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        
+        this.showModal('export', `
+            <h2>🎫 Export TICKET Sistema v3.0 POTENZIATO</h2>
+            <div class="alert alert-info">
+                <strong>🎯 TICKET POTENZIATO v3.0</strong><br>
+                • <strong>TUTTE LE COLONNE ODL:</strong> Include anche item senza produzione<br>
+                • <strong>OPERATORI SEPARATI:</strong> Colonne multiple automatiche<br>
+                • <strong>DESCRIZIONI ATTIVITÀ:</strong> Mappate nella riga del giorno lavorato<br>
+                • <strong>EXPORT UNIFICATO:</strong> Un singolo file Excel chiamato "Ticket"
+            </div>
+            <div class="panel">
+                <h3 style="color: var(--gold);">📅 Seleziona Periodo</h3>
+                <div class="grid grid-auto">
+                    <div>
+                        <label>📅 Data Inizio:</label>
+                        <input type="date" id="exportDateFrom" class="form-control" value="${firstDay.toISOString().split('T')[0]}">
+                    </div>
+                    <div>
+                        <label>📅 Data Fine:</label>
+                        <input type="date" id="exportDateTo" class="form-control" value="${lastDay.toISOString().split('T')[0]}">
+                    </div>
+                </div>
+                <button class="btn btn-info mt-2" onclick="app.analizzaPeriodoPotenziato()" style="width: 100%;">
+                    🔍 Analizza Periodo v3.0
+                </button>
+            </div>
+            <div id="exportResults"></div>
+        `);
+    },
+    
+    // 🔍 ANALIZZA PERIODO POTENZIATO v3.0
+    analizzaPeriodoPotenziato() {
+        const dataInizio = new Date(document.getElementById('exportDateFrom').value);
+        const dataFine = new Date(document.getElementById('exportDateTo').value);
+        
+        if (!dataInizio || !dataFine) {
+            alert('⚠️ Seleziona entrambe le date!');
+            return;
+        }
+        
+        console.log('🔍 Analisi periodo:', dataInizio, 'to', dataFine);
+        
+        // Analizza tutti gli item ODL per il periodo
+        const analisi = this.analizzaItemsCompleta(dataInizio, dataFine);
+        this.mostraAnalisiPotenziata(analisi);
+    },
+    
+    // 📊 ANALIZZA ITEMS COMPLETA (TUTTI GLI ITEM ODL)
+    analizzaItemsCompleta(dataInizio, dataFine) {
+        const analisi = {
+            periodo: { inizio: dataInizio, fine: dataFine },
+            itemsAnalizzati: this.state.itemsData.length,
+            produzioniTrovate: 0,
+            operatoriUnici: new Set(),
+            dateUniche: new Set(),
+            productions: []
+        };
+        
+        // Analizza ogni item ODL
+        this.state.itemsData.forEach(item => {
+            const produzioniPeriodo = (item.produzione || []).filter(prod => {
+                const dataProd = new Date(prod.data);
+                return dataProd >= dataInizio && dataProd <= dataFine;
+            });
+            
+            // Aggiungi item anche se non ha produzioni (per TICKET completo)
+            if (produzioniPeriodo.length === 0) {
+                // Item senza produzione nel periodo
+                analisi.productions.push({
+                    data: dataInizio.toISOString().split('T')[0],
+                    itemCode: item.codiceMateriale,
+                    descrizione: item.descrizione,
+                    categoria: item.categoria,
+                    quantita: 0,
+                    unitaMisura: item.unitaMisura,
+                    prezzoUnitario: item.prezzoUnitario,
+                    risorsa: 'N/A',
+                    note: 'Item ODL senza produzione',
+                    tipo: 'economia'
+                });
+            } else {
+                // Item con produzioni
+                produzioniPeriodo.forEach(prod => {
+                    analisi.productions.push({
+                        data: prod.data,
+                        itemCode: item.codiceMateriale,
+                        descrizione: prod.note || item.descrizione,
+                        categoria: item.categoria,
+                        quantita: prod.quantita,
+                        unitaMisura: item.unitaMisura,
+                        prezzoUnitario: item.prezzoUnitario,
+                        risorsa: prod.risorsa,
+                        note: prod.note || '',
+                        tipo: prod.tipo || 'economia'
+                    });
+                    
+                    analisi.operatoriUnici.add(prod.risorsa);
+                    analisi.dateUniche.add(prod.data);
+                    analisi.produzioniTrovate++;
+                });
+            }
+        });
+        
+        console.log('📊 Analisi completata:', analisi);
+        return analisi;
+    },
+    
+    // 📋 MOSTRA ANALISI POTENZIATA
+    mostraAnalisiPotenziata(analisi) {
+        console.log('📋 Mostra analisi:', analisi);
+        
+        const totalePeriodo = analisi.productions.reduce((sum, p) => sum + (p.quantita * p.prezzoUnitario), 0);
+        
+        document.getElementById('exportResults').innerHTML = `
+            <div class="alert alert-success">
+                <h3>📊 ANALISI PERIODO COMPLETATA v3.0</h3>
+                <div class="grid grid-auto">
+                    <div><strong>📋 Item ODL totali:</strong> ${analisi.itemsAnalizzati}</div>
+                    <div><strong>📦 Record da esportare:</strong> ${analisi.productions.length}</div>
+                    <div><strong>👥 Operatori trovati:</strong> ${analisi.operatoriUnici.size}</div>
+                    <div><strong>📅 Giorni lavorativi:</strong> ${analisi.dateUniche.size}</div>
+                    <div><strong>💰 Totale periodo:</strong> €${totalePeriodo.toLocaleString('it-IT', {minimumFractionDigits: 2})}</div>
+                </div>
+            </div>
+            <div class="grid grid-auto mt-2">
+                <button class="btn btn-success" onclick="app.generaTICKETPotenziato()" style="width: 100%;">
+                    🎫 GENERA TICKET EXCEL v3.0
+                </button>
+                <button class="btn btn-info" onclick="app.hideModal()" style="width: 100%;">
+                    ❌ Chiudi
+                </button>
+            </div>
+        `;
+        
+        // Salva per export
+        this.state.exportMensileData = analisi;
+    },
+    
+    // 🎫 GENERA TICKET POTENZIATO v3.0
+    generaTICKETPotenziato() {
+        if (!this.state.exportMensileData) {
+            alert('⚠️ Esegui prima l\'analisi del periodo!');
+            return;
+        }
+        
+        console.log('🎫 Genera TICKET:', this.state.exportMensileData);
+        
+        const ticketData = this.costruisciTICKETCompleto(this.state.exportMensileData);
+        const workbook = this.creaTICKETExcel(ticketData);
+        
+        // Nome file con info ODL
+        const odlInfo = this.getStorageJson('odlsList')[this.state.currentOdlId];
+        const periodo = this.state.exportMensileData.periodo;
+        const nomeFile = `TICKET_${odlInfo?.name || 'ODL'}_${periodo.inizio.toISOString().split('T')[0]}_${periodo.fine.toISOString().split('T')[0]}.xlsx`;
+        
+        XLSX.writeFile(workbook, nomeFile);
+        
+        this.toast(`🎫 TICKET GENERATO v3.0!\n\n📁 ${nomeFile}\n📊 ${ticketData.righe.length} righe di dati\n🎯 ${ticketData.colonne.length} colonne ODL\n\n✅ Pronto per fatturazione!`);
+        this.hideModal();
+    },
+    
+    // 🏗️ COSTRUISCI TICKET COMPLETO
+    costruisciTICKETCompleto(analisi) {
+        console.log('🏗️ Costruisci TICKET completo:', analisi);
+        
+        // Raggruppa dati per costruire la matrice
+        const itemsUnici = [...new Set(analisi.productions.map(p => p.itemCode))];
+        const dateUniche = [...new Set(analisi.productions.map(p => p.data))].sort();
+        const operatoriUnici = [...analisi.operatoriUnici].sort();
+        
+        // Trova item ODL per info aggiuntive
+        const itemsInfo = new Map();
+        this.state.itemsData.forEach(item => {
+            itemsInfo.set(item.codiceMateriale, item);
+        });
+        
+        // Costruisci header colonne
+        const colonne = ['Data', 'Descrizione Attività'];
+        itemsUnici.forEach(codice => {
+            const item = itemsInfo.get(codice);
+            colonne.push(`${codice}${item ? ` (${item.unitaMisura})` : ''}`);
+        });
+        
+        // Costruisci righe dati
+        const righe = [];
+        
+        // Riga descrizioni item
+        const rigaDescrizioni = ['', 'DESCRIZIONI ITEM'];
+        itemsUnici.forEach(codice => {
+            const item = itemsInfo.get(codice);
+            rigaDescrizioni.push(item ? this.estraiNomeBreveColonna(item.descrizione) : codice);
+        });
+        righe.push(rigaDescrizioni);
+        
+        // Riga totali periodo
+        const rigaTotali = ['', 'TOTALI PERIODO'];
+        itemsUnici.forEach(codice => {
+            const totale = analisi.productions
+                .filter(p => p.itemCode === codice)
+                .reduce((sum, p) => sum + p.quantita, 0);
+            rigaTotali.push(totale > 0 ? totale : '');
+        });
+        righe.push(rigaTotali);
+        
+        // Righe giornaliere
+        dateUniche.forEach(data => {
+            const recordsGiorno = analisi.productions.filter(p => p.data === data);
+            
+            if (recordsGiorno.length > 0) {
+                // Raggruppa per descrizione attività
+                const attivitaGiorno = this.getDescrizioniGiorno(data, recordsGiorno);
+                
+                attivitaGiorno.forEach(descrizione => {
+                    const rigaGiorno = [data, descrizione];
+                    
+                    itemsUnici.forEach(codice => {
+                        const quantita = this.getQuantitaGiornoItem(recordsGiorno, codice, descrizione);
+                        rigaGiorno.push(quantita > 0 ? quantita : '');
+                    });
+                    
+                    righe.push(rigaGiorno);
+                });
+            }
+        });
+        
+        console.log('🏗️ TICKET costruito:', { colonne: colonne.length, righe: righe.length });
+        
+        return { colonne, righe, analisi };
+    },
+    
+    // 📋 GET DESCRIZIONI GIORNO
+    getDescrizioniGiorno(data, recordsGiorno) {
+        const descrizioni = new Set();
+        recordsGiorno.forEach(record => {
+            const desc = record.note || record.descrizione || 'Attività varie';
+            descrizioni.add(desc.substring(0, 100)); // Limite lunghezza
+        });
+        return Array.from(descrizioni);
+    },
+    
+    // 📊 GET QUANTITÀ GIORNO ITEM
+    getQuantitaGiornoItem(recordsGiorno, codiceItem, descrizione) {
+        return recordsGiorno
+            .filter(r => r.itemCode === codiceItem && 
+                         (r.note === descrizione || r.descrizione === descrizione))
+            .reduce((sum, r) => sum + r.quantita, 0);
+    },
+    
+    // 📊 CREA TICKET EXCEL
+    creaTICKETExcel(ticketData) {
+        console.log('📊 Crea TICKET Excel:', ticketData);
+        
+        const workbook = XLSX.utils.book_new();
+        
+        // Costruisci dati foglio
+        const worksheetData = [ticketData.colonne, ...ticketData.righe];
+        
+        const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+        
+        // Imposta larghezza colonne
+        const colWidths = ticketData.colonne.map((col, idx) => {
+            if (idx === 0) return { wch: 12 }; // Data
+            if (idx === 1) return { wch: 30 }; // Descrizione
+            return { wch: 15 }; // Item codes
+        });
+        worksheet['!cols'] = colWidths;
+        
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'TICKET');
+        
+        console.log('📊 Excel creato con successo');
+        return workbook;
+    },
+    
+    // Utility functions
+    getCellValue(worksheet, address) {
+        const cell = worksheet[address];
+        return cell ? (cell.v !== undefined ? cell.v : cell.w) : null;
+    },
+    
+    parseDate(input) {
+        if (!input) return null;
+        
+        if (input instanceof Date) return input.toISOString().split('T')[0];
+        if (typeof input === 'number') {
+            const date = new Date((input - 25569) * 86400 * 1000);
+            return date.toISOString().split('T')[0];
+        }
+        if (typeof input === 'string') {
+            const date = new Date(input);
+            return isNaN(date) ? null : date.toISOString().split('T')[0];
+        }
+        return null;
+    },
+    
+    estraiNomeBreveColonna(descrizione) {
+        if (!descrizione) return 'N/D';
+        
+        // Estrai parole chiave per i nomi colonne
+        const keywords = {
+            'CAPO': 'Capo',
+            'OPERAIO': 'Operaio',
+            'PIATTAFORMA': 'Piattaf.',
+            'ASPIRATORE': 'Aspir.',
+            'MULETTO': 'Muletto',
+            'FILTRO': 'Filtro',
+            'CARTELLO': 'Cartello',
+            'NASTRO': 'Nastro'
+        };
+        
+        const desc = descrizione.toUpperCase();
+        for (const [keyword, shortName] of Object.entries(keywords)) {
+            if (desc.includes(keyword)) return shortName;
+        }
+        
+        // Fallback: prime 3 parole o 20 caratteri
+        const words = descrizione.split(' ');
+        if (words.length > 3) {
+            return words.slice(0, 3).join(' ');
+        }
+        return descrizione.length > 20 ? descrizione.substring(0, 20) + '...' : descrizione;
+    },
+    
+    // Toast notifications
+    toast(message) {
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed; top: 20px; right: 20px; z-index: 9999;
+            background: var(--success); color: white; padding: 15px 25px;
+            border-radius: 8px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s ease; max-width: 400px; white-space: pre-line;
+        `;
+        toast.innerHTML = `<span style="margin-right: 10px;">🐾</span>${message}`;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => document.body.removeChild(toast), 300);
+        }, 4000);
+    },
+    
+    // 🎯 UI & Dashboard Management
+    updateView() {
+        this.updateOdlInfo();
+        if (this.state.itemsData.length > 0) {
+            this.showDataPanels();
+            this.updateTotals();
+            this.renderGauges();
+        } else {
+            this.hideDataPanels();
+        }
+    },
+    
+    updateOdlInfo() {
+        const info = document.getElementById('currentOdlInfo');
+        const buttons = ['btnImportRapportino', 'btnSaveOdl', 'btnBackup', 'btnExportMensile', 'btnLavoriMisura', 'btnResetData', 'btnDebugTest'];
+        
+        if (this.state.currentOdlId) {
+            const odl = this.getStorageJson('odlsList')[this.state.currentOdlId];
+            info.innerHTML = `📋 <strong>${odl?.name}</strong><br><small>Creato: ${odl?.date}</small>`;
+            buttons.forEach(id => document.getElementById(id)?.classList.remove('hidden'));
+        } else {
+            info.textContent = 'Nessun ODL caricato';
+            buttons.forEach(id => document.getElementById(id)?.classList.add('hidden'));
+        }
+    },
+    
+    showDataPanels() {
+        document.getElementById('totalsPanel')?.classList.remove('hidden');
+        document.getElementById('filtersPanel')?.classList.remove('hidden');
+    },
+    
+    hideDataPanels() {
+        document.getElementById('totalsPanel')?.classList.add('hidden');
+        document.getElementById('filtersPanel')?.classList.add('hidden');
+        const gaugesContainer = document.getElementById('gaugesContainer');
+        if (gaugesContainer) gaugesContainer.innerHTML = '';
+    },
+    
+    updateTotals() {
+        const items = this.state.itemsData;
+        
+        // 🐛 DEBUG: Controlla valori anomali nei prezzi totali
+        console.log('🔍 DEBUG TOTALI - Analisi prezzi per item:');
+        items.forEach((item, idx) => {
+            if (item.prezzoTotale > 100000) { // Soglia per identificare valori anomali
+                console.warn(`⚠️ VALORE ANOMALO - Item ${idx}:`, {
+                    codice: item.codiceMateriale,
+                    descrizione: item.descrizione?.substring(0, 50),
+                    prezzoTotale: item.prezzoTotale,
+                    quantita: item.quantita,
+                    prezzoUnitario: item.prezzoUnitario
+                });
+            }
+        });
+        
+        const totalBudget = items.reduce((sum, i) => {
+            const prezzo = parseFloat(i.prezzoTotale) || 0;
+            const calcolato = (i.quantita || 0) * (i.prezzoUnitario || 0);
+            
+            // 🔧 FILTRO TEMPORANEAMENTE RIDOTTO PER VERIFICARE PARSING COLONNA G
+            // Esclude solo valori chiaramente anomali o con errori di calcolo
+            if (prezzo > 100000) { // Soglia temporaneamente aumentata per vedere tutti i valori
+                console.error(`❌ VALORE FILTRATO - Troppo alto: ${prezzo}€ per ${i.codiceMateriale}`);
+                return sum;
+            }
+            
+            // Controllo specifico per errori di importazione (quantità = prezzo unitario)
+            // RIMOSSO: Con la lettura dalla colonna G questo controllo non è più necessario
+            /*
+            if (i.quantita === i.prezzoUnitario && i.quantita > 100) {
+                console.error(`❌ VALORE FILTRATO - Errore importazione Q.tà=P.Unit: ${prezzo}€ per ${i.codiceMateriale}`);
+                return sum;
+            }
+            */
+            
+            // Controllo per prezzi unitari irrealistici (>50k€/unità probabilmente è un errore)
+            if ((i.prezzoUnitario || 0) > 50000) {
+                console.error(`❌ VALORE FILTRATO - Prezzo unitario irrealistico: ${i.prezzoUnitario}€/unità per ${i.codiceMateriale}`);
+                return sum;
+            }
+            
+            // Log per tutti i valori per verificare la correttezza
+            if (prezzo > 1000) {
+                console.log(`✅ VALORE ACCETTATO dalla colonna G (IMPORTO TOTALE): ${prezzo}€ per ${i.codiceMateriale} (Q.tà=${i.quantita} × P.Unit=${i.prezzoUnitario})`);
+            }
+            
+            return sum + prezzo;
+        }, 0);
+        
+        // 💰 CALCOLO COSTO CONSUMATO: quantità fisica × prezzo unitario
+        // Esempio: 8 ore × 19,66€/h = 157,28€ consumati dal budget
+        const totalConsumed = items.reduce((sum, i) => {
+            const costoConsumato = (i.consumato || 0) * (i.prezzoUnitario || 0);
+            return sum + costoConsumato;
+        }, 0);
+        const completed = items.filter(i => i.completamento >= 99.9).length;
+        
+        console.log('📊 TOTALI CALCOLATI:', {
+            totalBudget: totalBudget,
+            totalConsumed: totalConsumed,
+            remaining: totalBudget - totalConsumed,
+            itemsCount: items.length
+        });
+        
+        const totalItems = document.getElementById('totalItems');
+        const totalConsumedEl = document.getElementById('totalConsumed');
+        const totalRemaining = document.getElementById('totalRemaining');
+        const completedItems = document.getElementById('completedItems');
+        
+        if (totalItems) totalItems.textContent = items.length;
+        if (totalConsumedEl) totalConsumedEl.textContent = this.formatCurrency(totalConsumed);
+        if (totalRemaining) totalRemaining.textContent = this.formatCurrency(totalBudget - totalConsumed);
+        if (completedItems) completedItems.textContent = completed;
+    },
+    
+    renderGauges() {
+        const container = document.getElementById('gaugesContainer');
+        if (!container) return;
+        
+        const items = this.state.currentFilter === 'all' ? 
+            this.state.itemsData : 
+            this.state.itemsData.filter(i => i.categoria === this.state.currentFilter);
+        
+        container.innerHTML = items.map(item => this.createProgressCardHTML(item)).join('');
+    },
+    
+    createProgressCardHTML(item) {
+        const perc = item.completamento || 0;
+        // 🚦 LOGICA SEMAFORICA INVERTITA: Verde=inizio, Rosso=pieno
+        const color = perc >= 90 ? 'var(--danger)' : perc >= 70 ? 'var(--warning)' : perc >= 40 ? '#e67e22' : 'var(--success)';
+        
+        return `
+            <div class="progress-card" onclick="app.openProgressModal(${item.id})">
+                <div class="card-header">
+                    <strong>${item.codiceMateriale}</strong>
+                    <span class="badge badge-${item.categoria}">${this.config.categories[item.categoria].emoji}</span>
+                </div>
+                <div class="progress-info">
+                    <div class="progress-text">${Math.round(perc)}%</div>
+                    <div class="progress-bar" style="background: conic-gradient(${color} ${perc * 3.6}deg, rgba(255,255,255,0.1) 0deg);"></div>
+                </div>
+                <div class="card-footer">
+                    <small>${item.descrizione.substring(0, 30)}...</small>
+                </div>
+            </div>
+        `;
+    },
+    
+    // Modal inserimento/modifica dati item specifico
+    openProgressModal(itemId) {
+        const item = this.state.itemsData.find(i => i.id === itemId);
+        if (!item) {
+            console.error('Item non trovato:', itemId);
+            return;
+        }
+        
+        console.log(`🔍 DEBUG MODAL - Item ${item.codiceMateriale}:`, {
+            budgetTotale: item.budgetTotale,
+            prezzoTotale: item.prezzoTotale,
+            prezzoUnitario: item.prezzoUnitario,
+            consumato: item.consumato,
+            quantita: item.quantita
+        });
+        
+        const perc = item.completamento || 0;
+        // 🚦 LOGICA SEMAFORICA INVERTITA: Verde=inizio, Rosso=pieno
+        const color = perc >= 90 ? 'var(--danger)' : perc >= 70 ? 'var(--warning)' : perc >= 40 ? '#e67e22' : 'var(--success)';
+        const categoria = this.config.categories[item.categoria];
+        
+        // Lista produzioni esistenti
+        let produzioniHtml = '';
+        if (item.produzione && item.produzione.length > 0) {
+            produzioniHtml = `
+                <div class="panel mt-2" style="padding: 15px;">
+                    <h4 style="margin-bottom: 8px; font-size: 1rem;">📋 Produzioni Esistenti</h4>
+                    <div class="table-container">
+                        <table style="font-size: 0.85em;">
+                            <tr><th style="padding: 6px;">Data</th><th style="padding: 6px;">Operatore</th><th style="padding: 6px;">Quantità</th><th style="padding: 6px;">Note</th><th style="padding: 6px;">Azioni</th></tr>
+                            ${item.produzione.map((prod, idx) => `
+                                <tr>
+                                    <td style="padding: 4px;">${new Date(prod.data).toLocaleDateString('it-IT')}</td>
+                                    <td style="padding: 4px;">${(prod.operatore || prod.risorsa || 'N/D').substring(0, 15)}${(prod.operatore || prod.risorsa || '').length > 15 ? '...' : ''}</td>
+                                    <td style="padding: 4px;">${prod.quantita} ${item.unitaMisura}</td>
+                                    <td style="padding: 4px;">${((prod.note || '').substring(0, 20))}${(prod.note && prod.note.length > 20) ? '...' : ''}</td>
+                                    <td style="padding: 4px;">
+                                        <button class="btn btn-danger btn-small" onclick="app.eliminaProduzione(${item.id}, ${idx})" style="padding: 3px 6px; font-size: 0.7em;">🗑️</button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+        
+        this.showModal('progress', `
+            <h2 style="margin-bottom: 15px;">⚙️ ${item.codiceMateriale}</h2>
+            
+            <div class="panel" style="padding: 15px;">
+                <div class="card-header mb-2">
+                    <strong>${item.codiceMateriale}</strong>
+                    <span class="badge badge-${item.categoria}">${categoria.emoji} ${item.categoria.toUpperCase()}</span>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 60px; gap: 15px; align-items: center; margin: 15px 0;">
+                    <div>
+                        <h4 style="margin: 0 0 8px 0; font-size: 1rem;">Completamento: ${Math.round(perc)}%</h4>
+                        <div style="background: #f0f0f0; border-radius: 8px; height: 15px; overflow: hidden;">
+                            <div style="height: 100%; background: ${color}; width: ${perc}%; transition: width 0.3s ease;"></div>
+                        </div>
+                        <div style="font-size: 0.8em; color: #ccc; margin-top: 3px;">
+                            ${this.formatCurrency((item.consumato || 0) * (item.prezzoUnitario || 0))} / ${this.formatCurrency(item.budgetTotale || item.prezzoTotale || 0)}
+                        </div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 1.5em; font-weight: bold; color: ${color};">${Math.round(perc)}%</div>
+                    </div>
+                </div>
+                
+                <div style="background: rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; margin: 10px 0; font-size: 0.9em;">
+                    ${(() => {
+                        const desc = item.descrizione || '';
+                        if (desc.length <= 100) {
+                            return `<strong>Descrizione:</strong> ${desc}`;
+                        }
+                        
+                        const primaRiga = desc.split('\\n')[0];
+                        const resto = desc.substring(primaRiga.length).trim();
+                        
+                        if (resto.length > 0) {
+                            // Multi-riga: mostra prima riga + espandi
+                            return `
+                                <strong>Descrizione:</strong> <span id="desc-short">${primaRiga}</span>
+                                <span id="desc-more" style="display:none;">${desc.replace(/\\n/g, '<br>')}</span>
+                                <button id="btn-expand-desc" class="btn btn-link btn-small" style="padding:0 6px; font-size:0.85em; color:#3498db;" onclick="
+                                    const more = document.getElementById('desc-more');
+                                    const btn = document.getElementById('btn-expand-desc');
+                                    const short = document.getElementById('desc-short');
+                                    if (more.style.display === 'none') { 
+                                        more.style.display = ''; 
+                                        short.style.display = 'none'; 
+                                        btn.textContent = 'Nascondi'; 
+                                    } else { 
+                                        more.style.display = 'none'; 
+                                        short.style.display = ''; 
+                                        btn.textContent = 'Espandi'; 
+                                    }
+                                ">Espandi</button>
+                            `;
+                        } else {
+                            // Riga singola lunga: mostra primi 100 caratteri + leggi tutto
+                            return `
+                                <strong>Descrizione:</strong> <span id="desc-short">${desc.substring(0, 100)}...</span>
+                                <span id="desc-more" style="display:none;">${desc}</span>
+                                <button id="btn-expand-desc" class="btn btn-link btn-small" style="padding:0 6px; font-size:0.85em; color:#3498db;" onclick="
+                                    const more = document.getElementById('desc-more');
+                                    const btn = document.getElementById('btn-expand-desc');
+                                    const short = document.getElementById('desc-short');
+                                    if (more.style.display === 'none') { 
+                                        more.style.display = ''; 
+                                        short.style.display = 'none'; 
+                                        btn.textContent = 'Nascondi'; 
+                                    } else { 
+                                        more.style.display = 'none'; 
+                                        short.style.display = ''; 
+                                        btn.textContent = 'Leggi tutto'; 
+                                    }
+                                ">Leggi tutto</button>
+                            `;
+                        }
+                    })()}
+                </div>
+                
+                <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0;">
+                    <div style="background: rgba(52, 152, 219, 0.2); padding: 10px; border-radius: 8px; text-align: center;">
+                        <h4 style="margin: 0 0 5px 0; color: var(--info); font-size: 0.9em;">💰 Budget</h4>
+                        <div style="font-size: 1.1em; font-weight: bold;">${this.formatCurrency((item.budgetTotale || item.prezzoTotale || 0))}</div>
+                    </div>
+                    <div style="background: rgba(39, 174, 96, 0.2); padding: 10px; border-radius: 8px; text-align: center;">
+                        <h4 style="margin: 0 0 5px 0; color: var(--success); font-size: 0.9em;">📊 Consumato</h4>
+                        <div style="font-size: 1.1em; font-weight: bold;">${this.formatCurrency((item.consumato || 0) * (item.prezzoUnitario || 0))}</div>
+                    </div>
+                </div>
+                
+                <div style="background: rgba(243, 156, 18, 0.2); padding: 8px; border-radius: 6px; text-align: center; margin: 8px 0;">
+                    <strong style="font-size: 0.9em;">💡 Rimanente:</strong> 
+                    ${this.formatCurrency((item.budgetTotale || item.prezzoTotale || 0) - ((item.consumato || 0) * (item.prezzoUnitario || 0)))}
+                </div>
+            </div>
+            
+            ${produzioniHtml}
+            
+            <div class="panel mt-2" style="padding: 15px;">
+                <h4 style="margin-bottom: 10px; font-size: 1rem;">➕ Aggiungi Produzione</h4>
+                
+                <!-- 🚨 INDICATORE BUDGET DISPONIBILE -->
+                <div style="background: rgba(52, 152, 219, 0.1); border: 2px solid var(--info); border-radius: 8px; padding: 10px; margin-bottom: 15px;">
+                    <strong>💰 CONTROLLO BUDGET:</strong><br>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 5px;">
+                        <div>
+                            <small>📊 Quantità consumata:</small><br>
+                            <strong>${(item.consumato || 0).toFixed(2)} ${item.unitaMisura}</strong>
+                        </div>
+                        <div>
+                            <small>💰 Costo consumato:</small><br>
+                            <strong>${this.formatCurrency((item.consumato || 0) * (item.prezzoUnitario || 0))}</strong>
+                        </div>
+                        <div>
+                            <small>💳 Budget rimanente:</small><br>
+                            <strong>${this.formatCurrency((item.budgetTotale || item.prezzoTotale || 0) - ((item.consumato || 0) * (item.prezzoUnitario || 0)))}</strong>
+                        </div>
+                        <div>
+                            <small>📏 Max quantità aggiungibile:</small><br>
+                            <strong>${Math.max(0, ((item.budgetTotale || item.prezzoTotale || 0) - ((item.consumato || 0) * (item.prezzoUnitario || 0))) / (item.prezzoUnitario || 1)).toFixed(2)} ${item.unitaMisura}</strong>
+                        </div>
+                    </div>
+                    <div style="margin-top: 8px; font-size: 0.85em; color: #666;">
+                        💡 <strong>Esempio:</strong> 8 ${item.unitaMisura} × ${(item.prezzoUnitario || 0).toFixed(2)}€ = ${this.formatCurrency(8 * (item.prezzoUnitario || 0))}
+                    </div>
+                </div>
+                
+                <form onsubmit="app.aggiungiProduzione(event, ${item.id})">
+                    <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <div>
+                            <label style="font-size: 0.8em; color: #ccc; margin-bottom: 3px; display: block;">📅 Data lavoro</label>
+                            <input type="date" class="form-control" id="nuova_data" required value="${new Date().toISOString().split('T')[0]}" style="padding: 8px; font-size: 0.9em;">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8em; color: #ccc; margin-bottom: 3px; display: block;">👷 Operatore</label>
+                            <input type="text" class="form-control" id="nuova_operatore" placeholder="Nome operatore" required style="padding: 8px; font-size: 0.9em;">
+                        </div>
+                    </div>
+                    <div class="grid" style="grid-template-columns: 1fr auto auto; gap: 8px; margin-top: 8px; align-items: end;">
+                        <div>
+                            <label style="font-size: 0.8em; color: #ccc; margin-bottom: 3px; display: block;">⏱️ Quantità lavorata (${item.unitaMisura})</label>
+                            <input type="number" class="form-control" id="nuova_quantita" step="0.1" placeholder="Es: 8,5" required max="${this.formatNumber(item.quantita - (item.consumato || 0), 2)}" style="padding: 8px; font-size: 0.9em;">
+                        </div>
+                        <div style="padding: 8px; background: rgba(52, 152, 219, 0.1); border-radius: 4px; font-weight: bold; text-align: center; min-width: 40px;">
+                            ${item.unitaMisura}
+                        </div>
+                        <div style="padding: 8px; background: rgba(39, 174, 96, 0.1); border-radius: 4px; font-size: 0.8em; text-align: center; min-width: 80px;">
+                            <strong>${this.formatCurrency(item.prezzoUnitario || 0)}</strong><br>
+                            <span style="font-size: 0.7em; color: #999;">per ${item.unitaMisura}</span>
+                        </div>
+                    </div>
+                    <textarea class="form-control mt-1" id="nuova_note" placeholder="Note attività" rows="2" style="padding: 8px; font-size: 0.9em;"></textarea>
+                    <div class="grid mt-2" style="grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <button type="submit" class="btn btn-success" style="padding: 8px 12px; font-size: 0.9em;">✅ Aggiungi</button>
+                        <button type="button" class="btn btn-primary" onclick="app.hideModal()" style="padding: 8px 12px; font-size: 0.9em;">🚪 Chiudi</button>
+                    </div>
+                </form>
+            </div>
+        `);
+    },
+
+    // Aggiungi nuova produzione
+    aggiungiProduzione(event, itemId) {
+        event.preventDefault();
+        
+        const item = this.state.itemsData.find(i => i.id === itemId);
+        if (!item) return;
+        
+        const nuovaQuantita = parseFloat(document.getElementById('nuova_quantita').value);
+        const operatore = document.getElementById('nuova_operatore').value;
+        
+        // 🚨 CONTROLLI DI SICUREZZA BUDGET
+        if (!nuovaQuantita || nuovaQuantita <= 0) {
+            alert('⚠️ Inserisci una quantità valida maggiore di zero!');
+            return;
+        }
+        
+        if (!operatore || operatore.trim().length < 2) {
+            alert('⚠️ Inserisci il nome dell\'operatore!');
+            return;
+        }
+        
+        // 🔒 CALCOLA COSTO DOPO AGGIUNTA (quantità × prezzo unitario)
+        const consumatoAttuale = item.consumato || 0; // Quantità fisica già consumata
+        const nuovoConsumatoQuantita = consumatoAttuale + nuovaQuantita; // Nuova quantità fisica totale
+        
+        const costoAttuale = consumatoAttuale * (item.prezzoUnitario || 0); // Costo già consumato
+        const nuovoCosto = nuovaQuantita * (item.prezzoUnitario || 0); // Costo della nuova produzione
+        const costoTotaleDopoAggiunta = costoAttuale + nuovoCosto; // Costo totale dopo aggiunta
+        
+        const budgetTotale = item.budgetTotale || item.prezzoTotale || 0; // Budget totale disponibile
+        
+        console.log(`🔍 CONTROLLO BUDGET ${item.codiceMateriale}:`, {
+            quantitaFisicaAttuale: consumatoAttuale,
+            nuovaQuantitaFisica: nuovaQuantita,
+            quantitaFisicaTotale: nuovoConsumatoQuantita,
+            prezzoUnitario: item.prezzoUnitario,
+            costoAttuale: costoAttuale,
+            nuovoCosto: nuovoCosto,
+            costoTotaleDopoAggiunta: costoTotaleDopoAggiunta,
+            budgetTotale: budgetTotale,
+            superamentoBudget: costoTotaleDopoAggiunta > budgetTotale
+        });
+        
+        // 🚨 BLOCCA SE SUPERA IL BUDGET MONETARIO
+        if (costoTotaleDopoAggiunta > budgetTotale) {
+            const budgetRimanente = budgetTotale - costoAttuale;
+            const quantitaMaxConsentita = budgetRimanente / (item.prezzoUnitario || 1);
+            
+            alert(`🚨 SUPERAMENTO BUDGET BLOCCATO!\n\n` +
+                  `📊 Item: ${item.codiceMateriale}\n` +
+                  `� Budget totale: ${this.formatCurrency(budgetTotale)}\n` +
+                  `✅ Già consumato: ${consumatoAttuale.toFixed(2)} ${item.unitaMisura} = ${this.formatCurrency(costoAttuale)}\n` +
+                  `🟡 Budget rimanente: ${this.formatCurrency(budgetRimanente)}\n\n` +
+                  `❌ Stai tentando di aggiungere: ${nuovaQuantita} ${item.unitaMisura} × ${item.prezzoUnitario}€ = ${this.formatCurrency(nuovoCosto)}\n` +
+                  `❌ Costo totale risultante: ${this.formatCurrency(costoTotaleDopoAggiunta)}\n\n` +
+                  `💡 SOLUZIONE: Inserisci massimo ${quantitaMaxConsentita.toFixed(2)} ${item.unitaMisura}`);
+            
+            // Suggerisci la quantità massima consentita
+            document.getElementById('nuova_quantita').value = this.formatNumber(quantitaMaxConsentita, 2);
+            document.getElementById('nuova_quantita').focus();
+            return;
+        }
+        
+        // 🟡 AVVISO SE SUPERA IL 90% DEL BUDGET (quasi completamento)
+        const percentualeBudgetDopoAggiunta = (costoTotaleDopoAggiunta / budgetTotale) * 100;
+        if (percentualeBudgetDopoAggiunta >= 90 && percentualeBudgetDopoAggiunta < 100) {
+            const budgetRimanenteDopo = budgetTotale - costoTotaleDopoAggiunta;
+            if (!confirm(`⚠️ ATTENZIONE: BUDGET QUASI ESAURITO!\n\n` +
+                        `📊 Item: ${item.codiceMateriale}\n` +
+                        `📈 Utilizzo budget dopo aggiunta: ${percentualeBudgetDopoAggiunta.toFixed(1)}%\n` +
+                        `� Budget rimanente dopo aggiunta: ${this.formatCurrency(budgetRimanenteDopo)}\n` +
+                        `📊 Dettaglio: ${nuovaQuantita} ${item.unitaMisura} × ${item.prezzoUnitario}€ = ${this.formatCurrency(nuovoCosto)}\n\n` +
+                        `❓ Confermi l'aggiunta?`)) {
+                return;
+            }
+        }
+        
+        const produzione = {
+            data: document.getElementById('nuova_data').value,
+            operatore: operatore.trim(),
+            quantita: nuovaQuantita,
+            note: document.getElementById('nuova_note').value,
+            tipo: 'manuale',
+            timestamp: Date.now()
+        };
+        
+        if (!item.produzione) item.produzione = [];
+        item.produzione.push(produzione);
+        
+        // Ricalcola i totali
+        this.recalculateItemTotals(item);
+        
+        // Salva e aggiorna
+        this.saveToStorage();
+        this.updateView();
+        
+        // Riapri il modal aggiornato
+        this.openProgressModal(itemId);
+        
+        this.toast(`✅ Produzione aggiunta!\n${produzione.quantita} ${item.unitaMisura} per ${produzione.operatore}\n📈 Completamento: ${item.completamento}%`);
+    },
+
+    // Elimina produzione
+    eliminaProduzione(itemId, produzioneIndex) {
+        if (!confirm('🗑️ Eliminare questa produzione?')) return;
+        
+        const item = this.state.itemsData.find(i => i.id === itemId);
+        if (!item || !item.produzione) return;
+        
+        const prodRimossa = item.produzione.splice(produzioneIndex, 1)[0];
+        
+        // Ricalcola i totali
+        this.recalculateItemTotals(item);
+        
+        // Salva e aggiorna
+        this.saveToStorage();
+        this.updateView();
+        
+        // Riapri il modal aggiornato
+        this.openProgressModal(itemId);
+        
+        this.toast(`🗑️ Produzione eliminata!\n${prodRimossa.quantita} ${item.unitaMisura} rimossi`);
+    },
+
+    // 🎛️ Utility functions
+    setFilter(filter) {
+        document.querySelectorAll('[data-filter]').forEach(btn => btn.classList.remove('active'));
+        document.querySelector(`[data-filter="${filter}"]`)?.classList.add('active');
+        this.state.currentFilter = filter;
+        this.renderGauges();
+    },
+
+    resetView() {
+        this.state.currentOdlId = null;
+        this.state.itemsData = [];
+        this.updateView();
+    },
+
+    resetCurrentODL() {
+        if (!confirm('🗑️ Cancellare TUTTI i dati di produzione?')) return;
+        
+        this.state.itemsData.forEach(item => {
+            item.produzione = [];
+            item.completamento = 0;
+            item.consumato = 0;
+        });
+        
+        this.saveToStorage();
+        this.updateView();
+        this.toast('✅ Reset completato!');
+    },
+
+    salvaODLManuale() {
+        this.saveToStorage();
+        this.toast('✅ ODL salvato manualmente!');
+    },
+
+    // 💾 Storage helpers
+    saveToStorage() {
+        if (this.state.currentOdlId) {
+            localStorage.setItem(`odlData_${this.state.currentOdlId}`, JSON.stringify(this.state.itemsData));
+            localStorage.setItem('lastOdlId', this.state.currentOdlId);
+        }
+    },
+
+    loadFromStorage() {
+        const lastOdlId = localStorage.getItem('lastOdlId');
+        if (lastOdlId) {
+            const selector = document.getElementById('odlSelector');
+            if (selector) {
+                selector.value = lastOdlId;
+                this.loadODL(lastOdlId);
+            }
+        }
+    },
+
+    getStorageJson(key) {
+        try {
+            const data = localStorage.getItem(key);
+            if (!data) {
+                // ✅ FIX: Restituisci array vuoto per chiavi di lavori a misura
+                return (key.includes('lavoriMisura') || key.includes('lavori_')) ? [] : {};
+            }
+            const parsed = JSON.parse(data);
+            
+            // ✅ Controllo extra: se è una chiave di lavori ma il valore non è array
+            if ((key.includes('lavoriMisura') || key.includes('lavori_')) && !Array.isArray(parsed)) {
+                console.warn(`⚠️ Chiave ${key} dovrebbe essere array ma è:`, typeof parsed);
+                return [];
+            }
+            
+            return parsed;
+        } catch (e) {
+            console.warn('⚠️ Errore parsing JSON:', key, e);
+            // ✅ FIX: Restituisci array vuoto per chiavi di lavori a misura
+            return (key.includes('lavoriMisura') || key.includes('lavori_')) ? [] : {};
+        }
+    },
+
+    // 🎭 Modal system
+    initModals() {
+        const container = document.getElementById('modalsContainer');
+        if (!container) {
+            document.body.insertAdjacentHTML('beforeend', '<div id="modalsContainer"></div>');
+        }
+        
+        const modals = ['progress', 'newOdl', 'import', 'export', 'backup', 'lavori'];
+        
+        modals.forEach(id => {
+            if (!document.getElementById(`${id}Modal`)) {
+                document.getElementById('modalsContainer').innerHTML += `
+                    <div class="modal" id="${id}Modal">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <span class="close" onclick="app.hideModal()">&times;</span>
+                            </div>
+                            <div id="${id}ModalContent"></div>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+    },
+
+    showModal(id, content) {
+        const modalContent = document.getElementById(`${id}ModalContent`);
+        const modal = document.getElementById(`${id}Modal`);
+        
+        if (modalContent && modal) {
+            modalContent.innerHTML = content;
+            modal.style.display = 'block';
+        }
+    },
+
+    hideModal() {
+        document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+    },
+
+    // 🆕 HELPER: Escape/Decode JSON per HTML
+    escapeJsonForHtml(obj) {
+        return btoa(encodeURIComponent(JSON.stringify(obj)));
+    },
+
+    decodeJsonFromHtml(str) {
+        return JSON.parse(decodeURIComponent(atob(str)));
+    },
+
+    // 🆕 ESEGUI IMPORT INTELLIGENTE (modalità esistente)
+    eseguiImportIntelligente(sheetData) {
+        try {
+            const sheet = this.decodeJsonFromHtml(sheetData);
+            
+            // ESTRAZIONE AUTOMATICA COMPLETA (modalità esistente)
+            const risultati = this.estrazioneAutomaticaCompleta(sheet);
+            this.mostraRisultatiEstrazione(risultati);
+            
+        } catch (error) {
+            console.error('Errore import intelligente:', error);
+            alert('❌ Errore durante l\'import intelligente: ' + error.message);
+        }
+    },
+
+    // 🆕 IMPORT HARDCODED - ESTRAZIONE DALLE CELLE SPECIFICHE
+    eseguiImportHardcoded(sheetData) {
+        try {
+            const sheet = this.decodeJsonFromHtml(sheetData);
+            const risultati = this.estrazioneHardcodedCompleta(sheet);
+            this.mostraRisultatiHardcoded(risultati);
+        } catch (error) {
+            console.error('Errore import hardcoded:', error);
+            alert('❌ Errore durante l\'import hardcoded: ' + error.message);
+        }
+    },
+
+    // 🎯 ESTRAZIONE HARDCODED COMPLETA
+    estrazioneHardcodedCompleta(sheet) {
+        console.log('🎯 INIZIO ESTRAZIONE HARDCODED dalle celle specifiche');
+        
+        const risultati = {
+            dataLavoro: null,
+            operatori: [],
+            mezzi: [],
+            forniture: [],
+            descrizioneAttivita: '',
+            statistiche: {
+                operatoriTrovati: 0,
+                mezziTrovati: 0,
+                fornitueTrovate: 0
+            }
+        };
+        
+        // Estrai data dal rapportino (G4 o posizioni tipiche)
+        risultati.dataLavoro = this.estraiDataRapportino(sheet);
+        
+        // 👥 OPERATORI: B11-B22 (nomi), C11-C22 (ore)
+        console.log('👥 Estrazione operatori da B11-B22 e C11-C22...');
+        for (let row = 11; row <= 22; row++) {
+            const nome = this.getCellValue(sheet, `B${row}`);
+            const ore = this.getCellValue(sheet, `C${row}`);
+            
+            if (nome && nome.toString().trim().length > 0) {
+                const nomeClean = nome.toString().trim();
+                const oreNum = parseFloat(ore) || 0;
+                
+                // Validazione nome (evita falsi positivi)
+                if (this.isValidOperatorName(nomeClean)) {
+                    risultati.operatori.push({
+                        nome: nomeClean,
+                        ore: oreNum,
+                        cella: `B${row}`,
+                        cellaOre: `C${row}`
+                    });
+                    risultati.statistiche.operatoriTrovati++;
+                    console.log(`  ✅ Operatore trovato: ${nomeClean} (${oreNum}h) da B${row}`);
+                } else {
+                    console.log(`  ❌ Saltato (non valido): "${nomeClean}" da B${row}`);
+                }
+            }
+        }
+        
+        // 🚜 MEZZI: J11-J22 (descrizione), M11-M22 (ore)
+        console.log('🚜 Estrazione mezzi da J11-J22 e M11-M22...');
+        for (let row = 11; row <= 22; row++) {
+            const descrizione = this.getCellValue(sheet, `J${row}`);
+            const ore = this.getCellValue(sheet, `M${row}`);
+            
+            if (descrizione && descrizione.toString().trim().length > 0) {
+                const descClean = descrizione.toString().trim();
+                const oreNum = parseFloat(ore) || 0;
+                
+                // Validazione mezzo (evita falsi positivi)
+                if (this.isValidEquipmentName(descClean)) {
+                    risultati.mezzi.push({
+                        descrizione: descClean,
+                        ore: oreNum,
+                        cella: `J${row}`,
+                        cellaOre: `M${row}`
+                    });
+                    risultati.statistiche.mezziTrovati++;
+                    console.log(`  ✅ Mezzo trovato: ${descClean} (${oreNum}h) da J${row}`);
+                } else {
+                    console.log(`  ❌ Saltato (non valido): "${descClean}" da J${row}`);
+                }
+            }
+        }
+        
+        // 📦 FORNITURE: A26-A35 (descrizione), C26-C35 (quantità)
+        console.log('📦 Estrazione forniture da A26-A35 e C26-C35...');
+        for (let row = 26; row <= 35; row++) {
+            const descrizione = this.getCellValue(sheet, `A${row}`);
+            const quantita = this.getCellValue(sheet, `C${row}`);
+            
+            if (descrizione && descrizione.toString().trim().length > 0) {
+                const descClean = descrizione.toString().trim();
+                const qtaNum = parseFloat(quantita) || 0;
+                
+                // Validazione fornitura (evita falsi positivi)
+                if (this.isValidSupplyName(descClean)) {
+                    risultati.forniture.push({
+                        descrizione: descClean,
+                        quantita: qtaNum,
+                        cella: `A${row}`,
+                        cellaQuantita: `C${row}`
+                    });
+                    risultati.statistiche.fornitueTrovate++;
+                    console.log(`  ✅ Fornitura trovata: ${descClean} (${qtaNum}) da A${row}`);
+                } else {
+                    console.log(`  ❌ Saltato (non valido): "${descClean}" da A${row}`);
+                }
+            }
+        }
+        
+        // 📋 DESCRIZIONE ATTIVITÀ: A38 (celle unite)
+        console.log('📋 Estrazione descrizione attività da A38...');
+        const attivita = this.getCellValue(sheet, 'A38');
+        if (attivita && attivita.toString().trim().length > 0) {
+            risultati.descrizioneAttivita = attivita.toString().trim();
+            console.log(`  ✅ Attività trovata: ${risultati.descrizioneAttivita.substring(0, 50)}...`);
+        }
+        
+        console.log('🎯 ESTRAZIONE HARDCODED COMPLETATA:', risultati.statistiche);
+        return risultati;
+    },
+
+    // 🔍 VALIDATORI PER EVITARE FALSI POSITIVI
+    isValidOperatorName(nome) {
+        // Deve essere un nome plausibile (2-30 caratteri, solo lettere e spazi/apostrofi)
+        if (nome.length < 2 || nome.length > 30) return false;
+        if (!/^[a-zA-ZÀ-ÿ\s'\.]+$/.test(nome)) return false;
+        
+        // Escludi parole tecniche comuni
+        const blacklist = [
+            'totale', 'subtotale', 'parziale', 'importo', 'prezzo', 'costo',
+            'ore', 'giorni', 'lavoro', 'attivita', 'servizio', 'materiale',
+            'bagno', 'chimico', 'wc', 'servizi', 'igienici', 'firma', 'cliente',
+            'responsabile', 'tecnico', 'cantiere', 'direttore', 'capo'
+        ];
+        
+        const nomeLower = nome.toLowerCase();
+        if (blacklist.some(word => nomeLower.includes(word))) return false;
+        
+        // Deve sembrare un nome (almeno una maiuscola, possibilmente nome+cognome)
+        if (!/[A-Z]/.test(nome)) return false;
+        
+        return true;
+    },
+
+    isValidEquipmentName(descrizione) {
+        // Deve essere una descrizione plausibile di attrezzatura
+        if (descrizione.length < 3 || descrizione.length > 50) return false;
+        
+        // Parole chiave positive per mezzi/attrezzature
+        const keywords = [
+            'piattaforma', 'elevatore', 'muletto', 'carrello', 'gru', 'escavatore',
+            'dumper', 'compressore', 'generatore', 'aspiratore', 'pompa',
+            'telescopico', 'forbice', 'cestello', 'sollevatore', 'trasporto'
+        ];
+        
+        const descLower = descrizione.toLowerCase();
+        
+        // Deve contenere almeno una parola chiave positiva
+        if (!keywords.some(word => descLower.includes(word))) {
+            // O essere una descrizione tecnica generica
+            if (!/\b(nol|noleggio|ore|giorn|attrezzatura|mezzo)\b/.test(descLower)) {
+                return false;
+            }
+        }
+        
+        // Escludi parole che non sono mezzi
+        const blacklist = ['firma', 'cliente', 'bagno', 'wc', 'totale', 'subtotale'];
+        if (blacklist.some(word => descLower.includes(word))) return false;
+        
+        return true;
+    },
+
+    isValidSupplyName(descrizione) {
+        // Deve essere una descrizione plausibile di fornitura/materiale
+        if (descrizione.length < 3 || descrizione.length > 80) return false;
+        
+        const descLower = descrizione.toLowerCase();
+        
+        // Escludi elementi che non sono forniture
+        const blacklist = [
+            'firma', 'cliente', 'bagno', 'wc', 'totale', 'subtotale',
+            'ore', 'giorni', 'personale', 'operaio', 'tecnico'
+        ];
+        
+        if (blacklist.some(word => descLower.includes(word))) return false;
+        
+        return true;
+    },
+
+    // 📊 MOSTRA RISULTATI HARDCODED
+    mostraRisultatiHardcoded(risultati) {
+        let html = `
+            <div class="alert alert-success">
+                <strong>🎯 ESTRAZIONE HARDCODED COMPLETATA</strong><br>
+                📅 Data lavoro: ${new Date(risultati.dataLavoro).toLocaleDateString('it-IT')}<br>
+                👥 ${risultati.statistiche.operatoriTrovati} operatori | 🚜 ${risultati.statistiche.mezziTrovati} mezzi | 📦 ${risultati.statistiche.fornitueTrovate} forniture
+            </div>
+        `;
+        
+        // Sezione operatori
+        if (risultati.operatori.length > 0) {
+            html += `
+                <div class="panel mt-2">
+                    <h4>👥 OPERATORI (B11-B22)</h4>
+                    <div class="table-container">
+                        <table>
+                            <tr><th>Nome</th><th>Ore</th><th>Cella</th><th>Codice ODL</th></tr>
+                            ${risultati.operatori.map((op, idx) => `
+                                <tr>
+                                    <td>${op.nome}</td>
+                                    <td>${op.ore}</td>
+                                    <td>${op.cella}</td>
+                                    <td>
+                                        <select id="codice_op_${idx}" class="form-control" onchange="app.aggiornaPreviewHardcoded()">
+                                            ${this.getItemOptions('manodopera')}
+                                        </select>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Sezione mezzi
+        if (risultati.mezzi.length > 0) {
+            html += `
+                <div class="panel mt-2">
+                    <h4>🚜 MEZZI (J11-J22)</h4>
+                    <div class="table-container">
+                        <table>
+                            <tr><th>Descrizione</th><th>Ore</th><th>Cella</th><th>Codice ODL</th></tr>
+                            ${risultati.mezzi.map((mezzo, idx) => `
+                                <tr>
+                                    <td>${mezzo.descrizione}</td>
+                                    <td>${mezzo.ore}</td>
+                                    <td>${mezzo.cella}</td>
+                                    <td>
+                                        <select id="codice_mezzo_${idx}" class="form-control" onchange="app.aggiornaPreviewHardcoded()">
+                                            ${this.getItemOptions('noleggi')}
+                                        </select>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Sezione forniture
+        if (risultati.forniture.length > 0) {
+            html += `
+                <div class="panel mt-2">
+                    <h4>📦 FORNITURE (A26-A35)</h4>
+                    <div class="table-container">
+                        <table>
+                            <tr><th>Descrizione</th><th>Quantità</th><th>Cella</th><th>Codice ODL</th></tr>
+                            ${risultati.forniture.map((forn, idx) => `
+                                <tr>
+                                    <td>${forn.descrizione}</td>
+                                    <td>${forn.quantita}</td>
+                                    <td>${forn.cella}</td>
+                                    <td>
+                                        <select id="codice_forn_${idx}" class="form-control" onchange="app.aggiornaPreviewHardcoded()">
+                                            ${this.getItemOptions('materiali')}
+                                        </select>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Descrizione attività
+        if (risultati.descrizioneAttivita) {
+            html += `
+                <div class="panel mt-2">
+                    <h4>📋 DESCRIZIONE ATTIVITÀ (A38)</h4>
+                    <div class="alert alert-info">
+                        <strong>Attività estratta:</strong><br>
+                        ${risultati.descrizioneAttivita}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Pulsanti azione
+        html += `
+            <div class="grid mt-2" style="grid-template-columns: 1fr 1fr; gap: 10px;">
+                <button class="btn btn-success" onclick="app.eseguiImportHardcodedAutomatico('${this.escapeJsonForHtml(risultati)}')">
+                    🚀 Import Automatico
+                </button>
+                <button class="btn btn-primary" onclick="app.apriMappingManualeHardcoded('${this.escapeJsonForHtml(risultati)}')">
+                    🎮 Mapping Manuale
+                </button>
+            </div>
+        `;
+        
+        document.getElementById('importResults').innerHTML = html;
+        
+        // Preseleziona automaticamente i codici ODL più probabili
+        this.preselezioneAutomaticaHardcoded(risultati);
+    },
+
+    // 🧠 PRESELEZIONE AUTOMATICA CODICI ODL
+    preselezioneAutomaticaHardcoded(risultati) {
+        // Preseleziona operatori
+        risultati.operatori.forEach((op, idx) => {
+            const select = document.getElementById(`codice_op_${idx}`);
+            if (select) {
+                // Primo operatore = capo cantiere, altri = operai
+                const codiceDefault = idx === 0 ? 'P120026300' : 'P120026314';
+                const codiceTrovato = this.findMatchingCode(op.nome, 'manodopera', idx === 0);
+                select.value = codiceTrovato || codiceDefault;
+            }
+        });
+        
+        // Preseleziona mezzi
+        risultati.mezzi.forEach((mezzo, idx) => {
+            const select = document.getElementById(`codice_mezzo_${idx}`);
+            if (select) {
+                const codiceTrovato = this.findMatchingCode(mezzo.descrizione, 'noleggi');
+                if (codiceTrovato) select.value = codiceTrovato;
+            }
+        });
+        
+        // Preseleziona forniture
+        risultati.forniture.forEach((forn, idx) => {
+            const select = document.getElementById(`codice_forn_${idx}`);
+            if (select) {
+                const codiceTrovato = this.findMatchingCode(forn.descrizione, 'materiali');
+                if (codiceTrovato) select.value = codiceTrovato;
+            }
+        });
+    },
+
+    // 📊 AGGIORNA PREVIEW HARDCODED
+    aggiornaPreviewHardcoded() {
+        // Placeholder per funzionalità future
+        console.log('Preview hardcoded aggiornato');
+    },
+
+    // 🚀 ESEGUI IMPORT HARDCODED AUTOMATICO
+    eseguiImportHardcodedAutomatico(risultatiData) {
+        try {
+            // ✅ Controllo di sicurezza per currentOdlId
+            if (!this.state.currentOdlId) {
+                alert('❌ Errore: Nessun ODL selezionato per l\'import!');
+                return;
+            }
+
+            const risultati = this.decodeJsonFromHtml(risultatiData);
+            let imported = 0, errors = 0, misura = 0;
+            
+            // ✅ DEBUG: Log stato iniziale
+            console.log('🔍 Debug import automatico:', {
+                currentOdlId: this.state.currentOdlId,
+                operatori: risultati.operatori?.length || 0,
+                mezzi: risultati.mezzi?.length || 0,
+                forniture: risultati.forniture?.length || 0
+            });
+            
+            // Import operatori
+            risultati.operatori.forEach((op, idx) => {
+                const select = document.getElementById(`codice_op_${idx}`);
+                const codice = select?.value;
+                
+                if (codice) {
+                    const item = this.state.itemsData.find(i => i.codiceMateriale === codice);
+                    if (item) {
+                        const produzione = {
+                            data: risultati.dataLavoro,
+                            quantita: op.ore,
+                            risorsa: op.nome,
+                            note: `${risultati.descrizioneAttivita || 'Import hardcoded'} - DOGG v3.0`,
+                            tipo: 'economia',
+                            attivita: risultati.descrizioneAttivita || 'Attività varie',
+                            operatore: op.nome
+                        };
+                        
+                        if (this.addProduction(item, produzione)) {
+                            imported++;
+                        } else {
+                            errors++;
+                        }
+                    } else {
+                        errors++;
+                    }
+                } else {
+                    // Lavoro a misura
+                    this.addLavoroMisuraAutomatico(op.nome, op.ore, 'h', risultati.dataLavoro, risultati.descrizioneAttivita);
+                    misura++;
+                }
+            });
+            
+            // Import mezzi
+            risultati.mezzi.forEach((mezzo, idx) => {
+                const select = document.getElementById(`codice_mezzo_${idx}`);
+                const codice = select?.value;
+                
+                if (codice) {
+                    const item = this.state.itemsData.find(i => i.codiceMateriale === codice);
+                    if (item) {
+                        const produzione = {
+                            data: risultati.dataLavoro,
+                            quantita: mezzo.ore,
+                            risorsa: mezzo.descrizione,
+                            note: `${risultati.descrizioneAttivita || 'Import hardcoded'} - DOGG v3.0`,
+                            tipo: 'economia',
+                            attivita: risultati.descrizioneAttivita || 'Noleggio attrezzature',
+                            operatore: 'Sistema'
+                        };
+                        
+                        if (this.addProduction(item, produzione)) {
+                            imported++;
+                        } else {
+                            errors++;
+                        }
+                    } else {
+                        errors++;
+                    }
+                } else {
+                    // Lavoro a misura
+                    this.addLavoroMisuraAutomatico(mezzo.descrizione, mezzo.ore, 'h', risultati.dataLavoro, risultati.descrizioneAttivita);
+                    misura++;
+                }
+            });
+            
+            // Import forniture
+            risultati.forniture.forEach((forn, idx) => {
+                const select = document.getElementById(`codice_forn_${idx}`);
+                const codice = select?.value;
+                
+                if (codice) {
+                    const item = this.state.itemsData.find(i => i.codiceMateriale === codice);
+                    if (item) {
+                        const produzione = {
+                            data: risultati.dataLavoro,
+                            quantita: forn.quantita,
+                            risorsa: forn.descrizione,
+                            note: `${risultati.descrizioneAttivita || 'Import hardcoded'} - DOGG v3.0`,
+                            tipo: 'economia',
+                            attivita: risultati.descrizioneAttivita || 'Fornitura materiali',
+                            operatore: 'Sistema'
+                        };
+                        
+                        if (this.addProduction(item, produzione)) {
+                            imported++;
+                        } else {
+                            errors++;
+                        }
+                    } else {
+                        errors++;
+                    }
+                } else {
+                    // Lavoro a misura
+                    this.addLavoroMisuraAutomatico(forn.descrizione, forn.quantita, 'n.', risultati.dataLavoro, risultati.descrizioneAttivita);
+                    misura++;
+                }
+            });
+            
+            this.saveToStorage();
+            this.updateView();
+            this.hideModal();
+            this.toast(`✅ Import hardcoded completato!\n🟢 Economia: ${imported}\n🟠 Misura: ${misura}\n❌ Errori: ${errors}`);
+            
+        } catch (error) {
+            console.error('Errore import hardcoded automatico:', error);
+            alert('❌ Errore durante l\'import: ' + error.message);
+        }
+    },
+
+    // 🎮 APRI MAPPING MANUALE HARDCODED
+    apriMappingManualeHardcoded(risultatiData) {
+        alert('🚧 Mapping manuale hardcoded in sviluppo!\nUsa per ora l\'import automatico.');
+    },
+
+    // 🆕 HELPER: Aggiungi lavoro a misura automatico
+    addLavoroMisuraAutomatico(descrizione, quantita, unitaMisura, data, attivita) {
+        // ✅ Controllo di sicurezza per currentOdlId
+        if (!this.state.currentOdlId) {
+            console.error('❌ currentOdlId non definito in addLavoroMisuraAutomatico');
+            return;
+        }
+
+        const lavoro = {
+            data: data,
+            nome: `${descrizione} - ${attivita || 'Import hardcoded'}`,
+            quantita: quantita,
+            unitaMisura: unitaMisura,
+            prezzo: 0, // Da definire successivamente
+            note: 'Import automatico hardcoded DOGG v3.0',
+            timestamp: Date.now()
+        };
+        
+        // ✅ DOPPIO FIX: Assicurati che lavori sia sempre un array
+        const key = `lavoriMisura_${this.state.currentOdlId}`;
+        let lavori = this.getStorageJson(key);
+        
+        // Controllo extra di sicurezza
+        if (!lavori || !Array.isArray(lavori)) {
+            console.warn(`⚠️ Inizializzo array vuoto per ${key}`, lavori);
+            lavori = [];
+        }
+        
+        lavori.push(lavoro);
+        localStorage.setItem(key, JSON.stringify(lavori));
+    },
+
+    // 🆕 HELPER: Aggiungi produzione a un item
+    addProduction(item, produzione) {
+        try {
+            if (!item.produzione) {
+                item.produzione = [];
+            }
+            
+            // 🚨 CONTROLLO QUANTITÀ MASSIMA DISPONIBILE (COLONNA F DEL PREVENTIVO)
+            const nuovaQuantita = produzione.quantita || 0;
+            const consumatoAttuale = item.consumato || 0;
+            const quantitaMAXDisponibile = item.quantita || 0; // 🎯 Dalla colonna F: quantità massima dell'item
+            const nuovoConsumato = consumatoAttuale + nuovaQuantita;
+            
+            // ⚠️ Verifica se si supera la quantità massima disponibile per questo item
+            if (nuovoConsumato > quantitaMAXDisponibile) {
+                console.warn(`⚠️ SUPERAMENTO QUANTITÀ MASSIMA - ${item.codiceMateriale}:`, {
+                    quantitaMAXDisponibile,
+                    consumatoAttuale,
+                    nuovaQuantita,
+                    nuovoConsumato,
+                    operatore: produzione.operatore || produzione.risorsa || 'N/D'
+                });
+                
+                // 🔧 OPZIONE: Limita la quantità al massimo disponibile per l'item
+                const quantitaLimitata = Math.max(0, quantitaMAXDisponibile - consumatoAttuale);
+                if (quantitaLimitata > 0) {
+                    produzione.quantita = quantitaLimitata;
+                    produzione.note = (produzione.note || '') + ` [LIMITATA DA ${nuovaQuantita} A ${quantitaLimitata} - MAX ITEM: ${quantitaMAXDisponibile}]`;
+                    console.log(`🔧 Quantità limitata automaticamente a ${quantitaLimitata} ${item.unitaMisura} (max item: ${quantitaMAXDisponibile})`);
+                } else {
+                    console.warn(`❌ Produzione scartata - quantità massima completamente utilizzata per ${item.codiceMateriale} (max: ${quantitaMAXDisponibile})`);
+                    return false; // Non aggiungere se non c'è spazio
+                }
+            }
+            
+            item.produzione.push(produzione);
+            
+            // Aggiorna i totali dell'item
+            this.recalculateItemTotals(item);
+            
+            return true;
+        } catch (error) {
+            console.error('Errore aggiunta produzione:', error);
+            return false;
+        }
+    },
+
+    // 🆕 HELPER: Ricalcola totali item
+    recalculateItemTotals(item) {
+        if (!item.produzione) {
+            item.produzione = [];
+        }
+        
+        // 📊 CALCOLA QUANTITÀ FISICA CONSUMATA (ore, n., km, etc.)
+        const quantitaFisicaConsumata = item.produzione.reduce((sum, p) => sum + (p.quantita || 0), 0);
+        item.consumato = Math.round(quantitaFisicaConsumata * 100) / 100; // Arrotonda a 2 decimali
+        
+        // 💰 CALCOLA COSTO MONETARIO CONSUMATO (quantità × prezzo unitario)
+        const costoConsumato = item.consumato * (item.prezzoUnitario || 0);
+        
+        // 📈 CALCOLA PERCENTUALE DI COMPLETAMENTO BASATA SUL BUDGET MONETARIO
+        const budgetTotale = item.budgetTotale || item.prezzoTotale || 0;
+        
+        if (budgetTotale > 0) {
+            item.completamento = Math.min(100, Math.round((costoConsumato / budgetTotale) * 100));
+        } else {
+            item.completamento = item.consumato > 0 ? 100 : 0;
+        }
+        
+        console.log(`💰 RICALCOLO COMPLETAMENTO ${item.codiceMateriale}:`, {
+            quantitaFisicaConsumata: item.consumato,
+            prezzoUnitario: item.prezzoUnitario,
+            costoConsumato: costoConsumato,
+            budgetTotale: budgetTotale,
+            completamentoPercentuale: item.completamento,
+            esempio: `${item.consumato} ${item.unitaMisura} × ${item.prezzoUnitario}€ = ${costoConsumato.toFixed(2)}€`
+        });
+    },
+
+    // � HELPER: Verifica la disponibilità residua di un item
+    getItemAvailability(item) {
+        const quantitaMAXDisponibile = item.quantita || 0; // Dalla colonna F del preventivo
+        const consumatoAttuale = item.consumato || 0;
+        const disponibileResidue = Math.max(0, quantitaMAXDisponibile - consumatoAttuale);
+        
+        return {
+            quantitaMAXDisponibile,
+            consumatoAttuale,
+            disponibileResidue,
+            percentualeUtilizzo: quantitaMAXDisponibile > 0 ? Math.round((consumatoAttuale / quantitaMAXDisponibile) * 100) : 0,
+            isEsaurito: disponibileResidue <= 0,
+            isProssimAllEsaurimento: disponibileResidue > 0 && disponibileResidue <= (quantitaMAXDisponibile * 0.1) // Meno del 10%
+        };
+    },
+
+    // �🇮🇹 FORMATTAZIONE NUMERI ITALIANA
+    formatCurrency(value, decimals = 2) {
+        if (value === null || value === undefined || isNaN(value)) {
+            return '€ 0,00';
+        }
+        
+        const number = parseFloat(value);
+        
+        // Usa toLocaleString con formato italiano
+        return '€ ' + number.toLocaleString('it-IT', {
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: decimals
+        });
+    },
+
+    formatNumber(value, decimals = 1) {
+        if (value === null || value === undefined || isNaN(value)) {
+            return '0';
+        }
+        
+        const number = parseFloat(value);
+        
+        // Usa toLocaleString con formato italiano
+        return number.toLocaleString('it-IT', {
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: decimals
+        });
+    }
+};
+
+// Auto-save ogni 30 secondi
+setInterval(() => {
+    if (app.state.currentOdlId && app.state.itemsData.length > 0) {
+        app.saveToStorage();
+    }
+}, 30000);
+
+// Inizializzazione
+document.addEventListener('DOMContentLoaded', () => app.init());
+</script>
+
+</body>
+
+</html>
